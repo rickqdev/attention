@@ -1,0 +1,76 @@
+{
+  "product": "attention",
+  "date": "20260309",
+  "context_loaded": true,
+  "photos": {
+    "intent": {
+      "filename": "sample-purple-nails.jpg",
+      "hero_element": "蜘蛛装饰美甲",
+      "hero_reason": "它在画面前景最明显，同时细节稀缺，容易触发“这是怎么做的”的追问。",
+      "supporting_elements": [
+        "紫色针织上衣",
+        "库洛米发夹",
+        "红棕色发色"
+      ],
+      "all_elements": [
+        "蜘蛛装饰美甲",
+        "紫色针织上衣",
+        "库洛米发夹",
+        "红棕色发色"
+      ],
+      "mood": "甜酷、怪诞、精致",
+      "viewer_question": "这个蜘蛛装饰美甲是怎么做出来的？",
+      "social_search_query": "蜘蛛美甲 紫色美甲",
+      "attention_angle": "用一个很小但足够怪的细节，把整张图从普通自拍拉成“会被追问”的内容。",
+      "info_needed": [
+        "美甲店或制作方式",
+        "配色灵感来源"
+      ],
+      "relevance_score": 9,
+      "exclude_reason": null
+    },
+    "total_photos": 1,
+    "analyzed": 1,
+    "best_photos": [
+      {
+        "filename": "sample-purple-nails.jpg",
+        "hero_element": "蜘蛛装饰美甲",
+        "mood": "甜酷、怪诞、精致"
+      }
+    ],
+    "primary_attention_angle": "把局部细节当成整条内容的第一抓手，而不是泛泛地写整体穿搭。",
+    "viral_insights": {
+      "top_keywords": [
+        "蜘蛛美甲",
+        "紫色美甲",
+        "细节控"
+      ],
+      "viral_title_patterns": [
+        "[主角]｜一句判断 + 一个悬念",
+        "不是[常规印象]，是[反差亮点]"
+      ],
+      "emotional_hooks": [
+        "低调但会让人多看几眼",
+        "这种细节真的很容易被问"
+      ],
+      "core_narrative": "先点明主角，再解释为什么这个细节会让人停下来，最后补一刀自己的判断。",
+      "tone_style": "短句、直接、像朋友发消息，不故作热情。",
+      "avoid_cliches": [
+        "氛围感",
+        "高级感"
+      ]
+    }
+  },
+  "notes": {
+    "total": 1,
+    "passed_check": 1,
+    "notes": [
+      {
+        "title_a": "蜘蛛美甲｜比整套穿搭更会抢镜",
+        "title_b": "不是夸张，是这点细节太会勾人看",
+        "content": "这张图里最先把人拽住的，其实不是衣服，是无名指上那个蜘蛛装饰。它不大，但因为位置靠前、反差够强，会让人下意识想问这到底怎么做的。紫色针织和库洛米发夹都在帮它托气氛，所以整张图不会散，反而像是先用一个怪细节把人停住，再慢慢看到整套状态。我现在反而更喜欢这种不靠大面积堆料、只靠一个点把记忆拉住的做法。",
+        "tags": "#蜘蛛美甲 #紫色美甲 #细节控 #甜酷风 #怪诞细节 #局部特写"
+      }
+    ]
+  }
+}

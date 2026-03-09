@@ -1,0 +1,2 @@
+# attention 当前运行时只依赖 Python 标准库。
+# 如需本地模型兜底，请自行准备 Ollama 服务。
