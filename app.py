@@ -163,7 +163,7 @@ def load_public_example():
     return (
         example_result.get("markdown", ""),
         example_result,
-        "已加载公开示例：先由细节建立切入点，再展开成完整图文。",
+        "已加载公开示例结果。当前展示的是示例，不是你刚上传的图片。",
     )
 
 
@@ -268,11 +268,9 @@ def build_demo():
                     interactive=False,
                     value="上传图片后，会先告诉你这张图最该从哪里写，再给你一版文案草稿。",
                 )
-                with gr.Tabs():
-                    with gr.Tab("文案结果"):
-                        md_output = gr.Markdown(value="### 等你上传一张图\n先找亮点，再看文案。")
-                    with gr.Tab("详细数据"):
-                        json_output = gr.JSON(label="结构化数据（开发者可看）", value=example_result)
+                md_output = gr.Markdown(value="### 等你上传一张图\n先找亮点，再看文案。")
+                with gr.Accordion("开发者查看：详细数据", open=False):
+                    json_output = gr.JSON(label="结构化数据", value=None)
 
         gr.HTML(TRUST_HTML)
 
