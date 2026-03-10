@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import argparse
 import json
 import tempfile
 from pathlib import Path
@@ -318,5 +319,45 @@ def build_demo():
     return demo
 
 
+def build_parser():
+    parser = argparse.ArgumentParser(
+        description="Launch the attention / 注意力 Web demo for desktop or mobile browsers."
+    )
+    parser.add_argument(
+        "--host",
+        default="127.0.0.1",
+        help="监听地址。局域网手机访问时可使用 0.0.0.0。",
+    )
+    parser.add_argument(
+        "--port",
+        type=int,
+        default=7860,
+        help="Gradio 端口，默认 7860。",
+    )
+    parser.add_argument(
+        "--share",
+        action="store_true",
+        help="启用 Gradio 临时分享链接。",
+    )
+    parser.add_argument(
+        "--inbrowser",
+        action="store_true",
+        help="启动后自动在默认浏览器中打开。",
+    )
+    return parser
+
+
+def main():
+    args = build_parser().parse_args()
+    build_demo().launch(
+        server_name=args.host,
+        server_port=args.port,
+        share=args.share,
+        inbrowser=args.inbrowser,
+        show_error=True,
+        css=DEMO_CSS,
+    )
+
+
 if __name__ == "__main__":
-    build_demo().launch(css=DEMO_CSS)
+    main()

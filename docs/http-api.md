@@ -6,10 +6,16 @@
 
 ```bash
 python3 -m pip install -r requirements.txt
-attention-api
+attention-api --host 127.0.0.1 --port 8000
 ```
 
 默认地址：`http://127.0.0.1:8000`
+
+如果你要让手机、浏览器插件或另一台机器访问本机 API，可改为：
+
+```bash
+attention-api --host 0.0.0.0 --port 8000
+```
 
 ## Endpoints
 

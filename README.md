@@ -15,7 +15,7 @@
 
 ```bash
 python3 -m pip install -r requirements.txt
-python3 app.py
+python3 app.py --inbrowser
 ```
 
 打开 Gradio 页面后：
@@ -24,6 +24,13 @@ python3 app.py
 - 输入有效的 API key（仅本次运行使用，不落盘）
 - 点击 `上传图片，生成图文草案`
 - 或点击 `查看示例结果`
+
+## 面向个人使用者 | For Individuals
+
+- 桌面 Web/H5：`python3 app.py --inbrowser`
+- 手机浏览器：`python3 app.py --host 0.0.0.0` 后，用手机访问 `http://你的局域网IP:7860`
+- 本地批量处理：`attention-cli`
+- 详细说明：[docs/for-individuals.md](./docs/for-individuals.md)
 
 ## 安装为包 | Install as a Package
 
@@ -54,7 +61,7 @@ attention-cli --provider gemini --api-key "$GEMINI_API_KEY" --skip-viral-researc
 ### HTTP API
 
 ```bash
-attention-api
+attention-api --host 127.0.0.1 --port 8000
 ```
 
 - `POST /v1/intent/analyze`
@@ -84,6 +91,7 @@ attention-mcp
 
 说明：
 - [docs/skill.md](./docs/skill.md)
+- [docs/for-developers.md](./docs/for-developers.md)
 
 ## 它具体会帮你做什么
 
@@ -119,6 +127,8 @@ attention-mcp
 - `examples/requests/analyze_path.json`
 - `examples/requests/analyze_base64.template.json`
 - `examples/requests/generate_copy.json`
+- `scripts/encode_image.py`
+- `scripts/http_demo.py`
 
 ## 安全与隐私 | Security
 

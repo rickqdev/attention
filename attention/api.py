@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import argparse
+
 import uvicorn
 from fastapi import FastAPI
 
@@ -28,8 +30,16 @@ def generate_copy_endpoint(payload: GenerateAttentionCopyRequest):
     return generate_attention_copy(payload).model_dump(exclude_none=True)
 
 
+def build_parser():
+    parser = argparse.ArgumentParser(description="Run the attention HTTP API server.")
+    parser.add_argument("--host", default="127.0.0.1", help="API 监听地址，默认 127.0.0.1。")
+    parser.add_argument("--port", type=int, default=8000, help="API 端口，默认 8000。")
+    return parser
+
+
 def main():
-    uvicorn.run("attention.api:app", host="127.0.0.1", port=8000, reload=False)
+    args = build_parser().parse_args()
+    uvicorn.run("attention.api:app", host=args.host, port=args.port, reload=False)
 
 
 if __name__ == "__main__":
