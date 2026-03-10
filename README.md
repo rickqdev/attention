@@ -147,6 +147,12 @@ attention-mcp
 仓库附带一个最小浏览器插件示例：
 - [extensions/chrome/README.md](./extensions/chrome/README.md)
 
+## Tests
+
+```bash
+python3 -m unittest discover -s tests -v
+```
+
 ## Scope (v1)
 
 - 保留：图片意图分析 + 文案生成核心链路 + Gradio 演示 + HTTP API + 基础 MCP + Skill
