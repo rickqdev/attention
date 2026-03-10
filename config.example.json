@@ -3,13 +3,9 @@
   "gemini_model": "gemini-2.5-flash",
   "minimax_vl_model": "MiniMax-VL-01",
   "minimax_text_model": "MiniMax-Text-01",
-  "glm_model": "glm-4-flash",
   "gemini_api_key": "YOUR_GEMINI_API_KEY",
   "tavily_api_key": "YOUR_TAVILY_API_KEY",
-  "glm_api_key": "YOUR_GLM_API_KEY",
   "minimax_api_key": "YOUR_MINIMAX_API_KEY",
-  "qwen_ollama_url": "http://localhost:11434",
-  "qwen_model": "qwen2.5:0.5b",
   "persona": {
     "name": "attention-demo",
     "background": "一个偏冷静、重观察的中文内容创作者",

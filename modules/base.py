@@ -355,9 +355,7 @@ def gemini_request(prompt, images=None, model=None, temperature=0.8, provider=No
 
     providers = [
         ("Gemini", lambda: _call_gemini(prompt, images=images, temperature=temperature, model=selected_model)),
-        ("GLM", lambda: _call_glm(prompt, temperature=temperature, model=selected_model) if not images else None),
         ("MiniMax", lambda: _call_minimax(prompt, images=images, temperature=temperature, model=selected_model)),
-        ("Qwen 本地", lambda: _call_qwen_local(prompt, temperature=temperature, model=selected_model) if not images else None),
     ]
     for name, fn in providers:
         result = _run_provider(name, fn)

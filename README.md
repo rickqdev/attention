@@ -1,9 +1,11 @@
 # attention / 注意力
 
 **Image → Attention Copy**  
-上传图片，自动识别视觉主角与“用户最想问的问题”，输出最可能抓住注意力的文案。
+上传图片，分析最先抓住注意力的视觉焦点，并生成一条更容易让人停下来的文案。
 
 If this project is useful, please give it a Star.
+
+![attention demo](./assets/demo-ui.png)
 
 ## 30 秒上手 | Quick Start
 
@@ -15,7 +17,7 @@ python3 app.py
 打开 Gradio 页面后：
 - 上传图片
 - 选择 `provider`（`gemini` / `minimax` / `auto`）
-- 输入你的 API key（仅本次运行使用，不落盘）
+- 输入有效的 API key（仅本次运行使用，不落盘）
 - 点击生成
 
 ## CLI 用法 | CLI Usage
@@ -49,6 +51,7 @@ python3 main.py --provider gemini --api-key "$GEMINI_API_KEY" --skip-viral-resea
 - 仓库只提供 `config.example.json` 模板。
 - `config.json`、真实图片、日志、运行产物默认不会进入 Git。
 - UI 中输入的 key 只在内存中用于当前请求，不会自动写入文件。
+- 如果视觉分析失败，程序会明确报错，不会输出伪造成功结果。
 
 ## Scope (v1)
 

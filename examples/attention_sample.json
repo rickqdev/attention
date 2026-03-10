@@ -21,7 +21,6 @@
   "why_it_works": "把局部细节当成整条内容的第一抓手，而不是泛泛地写整体穿搭。",
   "meta": {
     "provider": "gemini",
-    "model_id": "gemini-2.5-flash",
     "photos_analyzed": 1,
     "source_images": [
       "sample-purple-nails.jpg"

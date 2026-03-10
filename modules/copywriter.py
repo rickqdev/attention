@@ -4,6 +4,13 @@ import re
 from .base import TODAY, check_forbidden, gemini_request, load_config, log
 
 
+def _normalize_tag(tag, max_length=16):
+    candidate = "#" + re.sub(r"\s+", "", str(tag or "").strip().lstrip("#"))
+    if candidate == "#" or len(candidate) > max_length:
+        return ""
+    return candidate
+
+
 def _clean_tags(raw_tags, viral_keywords=None):
     tags = re.findall(r"#[^#\s]+", raw_tags or "")
     if not tags:
@@ -16,7 +23,29 @@ def _clean_tags(raw_tags, viral_keywords=None):
                 tags.append(candidate)
             if len(tags) >= 8:
                 break
-    return " ".join(tags[:10])
+
+    cleaned = []
+    seen = set()
+    for tag in tags:
+        normalized = _normalize_tag(tag)
+        if not normalized or normalized in seen:
+            continue
+        seen.add(normalized)
+        cleaned.append(normalized)
+        if len(cleaned) >= 10:
+            break
+    return " ".join(cleaned)
+
+
+def _has_real_intent(photo_data):
+    intent = photo_data.get("intent", {})
+    if not isinstance(intent, dict):
+        return False
+    return bool(
+        str(intent.get("hero_element", "")).strip()
+        and str(intent.get("viewer_question", "")).strip()
+        and not intent.get("_fallback")
+    )
 
 
 def build_prompt(photo_data, viral_insights=None, context_info=""):
@@ -160,7 +189,7 @@ def _fallback_note(photo_data):
     keyword_seed = [item for item in query.split() if item][:4]
     base_tags = [f"#{hero}", "#注意力文案", "#图文创作"]
     base_tags.extend(f"#{item}" for item in keyword_seed if item)
-    tags = " ".join(base_tags[:8])
+    tags = _clean_tags(" ".join(base_tags[:8]))
 
     return {
         "photo": intent.get("filename", ""),
@@ -183,13 +212,29 @@ def _fallback_note(photo_data):
 
 def run(photo_data, cfg=None, context_info="", provider=None, model_id=None):
     del cfg
+    if not _has_real_intent(photo_data):
+        log("没有可用的真实图片意图，已停止文案生成。", "ERR")
+        return {
+            "notes": [],
+            "total": 0,
+            "passed_check": 0,
+            "raw": "",
+            "error": "未获得有效图片意图，请先完成真实视觉分析。",
+        }
+
     viral_insights = photo_data.get("viral_insights", {})
     prompt = build_prompt(photo_data, viral_insights=viral_insights, context_info=context_info)
     raw = gemini_request(prompt, temperature=0.8, provider=provider, model=model_id)
     if not raw:
         log("所有文字模型均失败，已使用规则兜底生成文案。", "WARN")
         note = _fallback_note(photo_data)
-        return {"notes": [note], "total": 1, "passed_check": 1, "raw": "", "fallback": True}
+        return {
+            "notes": [note],
+            "total": 1,
+            "passed_check": 1,
+            "raw": "",
+            "fallback": True,
+        }
 
     notes = parse_notes(raw, viral_keywords=viral_insights.get("top_keywords", []))
     for note in notes:

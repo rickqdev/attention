@@ -1,9 +1,8 @@
 import json
-import re
 from collections import Counter, defaultdict
 from pathlib import Path
 
-from .base import BASE_DIR, TODAY, clean_json, load_config, log, tavily_search, vision_request
+from .base import BASE_DIR, TODAY, clean_json, gemini_request, load_config, log, tavily_search, vision_request
 
 PHOTOS_DIR = BASE_DIR / "photos"
 SUPPORTED_EXT = {".jpg", ".jpeg", ".png", ".webp", ".gif"}
@@ -61,11 +60,7 @@ VIRAL_PROMPT = """分析以下真实内容标题和摘要，提取容易抓住�
 """
 
 
-def _context_path():
-    return BASE_DIR / "context" / f"context_{TODAY}.json"
-
-
-def analyze_image_intent(img_path, cfg, provider=None, model_id=None):
+def analyze_image_intent(img_path, provider=None, model_id=None):
     try:
         result = vision_request(
             INTENT_PROMPT,
@@ -76,50 +71,22 @@ def analyze_image_intent(img_path, cfg, provider=None, model_id=None):
         if result:
             data = json.loads(clean_json(result))
             data["filename"] = img_path.name
-            return data
+            if _is_valid_intent(data):
+                return data
+            log(f"[photo] 图片分析结果缺少关键字段：{img_path.name}", "WARN")
     except Exception as exc:
         log(f"[photo] 图片分析失败 {img_path.name}: {str(exc)[:120]}", "WARN")
-    return _fallback_intent(cfg, img_path.name)
+    return None
 
 
-def _fallback_intent(cfg, filename="unknown"):
-    context = {}
-    try:
-        path = _context_path()
-        if path.exists():
-            context = json.loads(path.read_text(encoding="utf-8"))
-    except Exception:
-        context = {}
-
-    clues = []
-    for key, value in context.items():
-        if key == "_说明":
-            continue
-        if isinstance(value, dict):
-            clues.extend(str(item).strip() for item in value.values() if str(item).strip())
-        elif isinstance(value, list):
-            clues.extend(str(item).strip() for item in value if str(item).strip())
-        elif str(value).strip():
-            clues.append(str(value).strip())
-
-    persona = cfg.get("persona", {})
-    hero = clues[0] if clues else persona.get("specialty", "图片主角")
-    query = " ".join(clues[:3]).strip() or hero
-    return {
-        "filename": filename,
-        "all_elements": clues,
-        "hero_element": hero,
-        "hero_reason": "根据上下文信息推断",
-        "supporting_elements": clues[1:4],
-        "mood": persona.get("background", ""),
-        "viewer_question": f"{hero}具体是什么 / 为什么会吸引人？",
-        "social_search_query": query,
-        "attention_angle": f"把 {hero} 当作整条内容的视觉抓手",
-        "info_needed": [],
-        "relevance_score": 6,
-        "exclude_reason": None,
-        "_fallback": True,
-    }
+def _is_valid_intent(data):
+    if not isinstance(data, dict):
+        return False
+    if not str(data.get("hero_element", "")).strip():
+        return False
+    if not str(data.get("viewer_question", "")).strip():
+        return False
+    return True
 
 
 def search_viral_posts(query):
@@ -134,7 +101,7 @@ def search_viral_posts(query):
     ]
 
 
-def extract_viral_insights(posts, retry=2):
+def extract_viral_insights(posts, provider=None, retry=2):
     if not posts:
         return {}
 
@@ -157,7 +124,11 @@ def extract_viral_insights(posts, retry=2):
 
     for attempt in range(retry + 1):
         try:
-            result = vision_request(VIRAL_PROMPT.format(posts_text=posts_text), images=None)
+            result = gemini_request(
+                VIRAL_PROMPT.format(posts_text=posts_text),
+                temperature=0.3,
+                provider=provider,
+            )
             if not result:
                 continue
             parsed = json.loads(clean_json(result))
@@ -265,6 +236,25 @@ def _aggregate_insights(insights_map):
     }
 
 
+def _failed(target_dir, image_files, reason, failed_images=None):
+    return {
+        "date": TODAY,
+        "input_dir": str(target_dir),
+        "total_photos": len(image_files),
+        "analyzed": 0,
+        "photo_filenames": [image.name for image in image_files],
+        "intent": {},
+        "viral_insights": {},
+        "best_photos": [],
+        "excluded_photos": [],
+        "primary_attention_angle": "",
+        "clusters": {},
+        "keyword_frequency": {},
+        "error": reason,
+        "failed_images": failed_images or [],
+    }
+
+
 def run(photos_dir=None, enable_viral_research=True, provider=None, model_id=None):
     cfg = load_config()
     target_dir = Path(photos_dir).expanduser() if photos_dir else PHOTOS_DIR
@@ -282,10 +272,19 @@ def run(photos_dir=None, enable_viral_research=True, provider=None, model_id=Non
 
     log(f"[photo] 发现 {len(image_files)} 张图片，开始分析。", "START")
     analyzed = []
+    failed_images = []
     for image in image_files:
         log(f"[photo] 分析 {image.name}", "INFO")
-        intent = analyze_image_intent(image, cfg, provider=provider, model_id=model_id)
-        analyzed.append(intent)
+        intent = analyze_image_intent(image, provider=provider, model_id=model_id)
+        if intent:
+            analyzed.append(intent)
+        else:
+            failed_images.append(image.name)
+
+    if not analyzed:
+        reason = "视觉分析失败。请检查 provider、API key、网络状态或更换图片。"
+        log(f"[photo] {reason}", "ERR")
+        return _failed(target_dir, image_files, reason, failed_images=failed_images)
 
     insights_map = {}
     if enable_viral_research:
@@ -298,7 +297,7 @@ def run(photos_dir=None, enable_viral_research=True, provider=None, model_id=Non
                 posts = search_viral_posts(query)
                 if not posts:
                     continue
-                insight = extract_viral_insights(posts)
+                insight = extract_viral_insights(posts, provider=provider)
                 if insight:
                     insights_map[query] = insight
 
@@ -309,7 +308,7 @@ def run(photos_dir=None, enable_viral_research=True, provider=None, model_id=Non
             posts = search_viral_posts(keyword)
             if not posts:
                 continue
-            insight = extract_viral_insights(posts)
+            insight = extract_viral_insights(posts, provider=provider)
             if insight:
                 insights_map[keyword] = insight
     else:
@@ -337,6 +336,7 @@ def run(photos_dir=None, enable_viral_research=True, provider=None, model_id=Non
         "photo_filenames": [image.name for image in image_files],
         "intent": analyzed[0] if analyzed else {},
         "viral_insights": combined_insights,
+        "failed_images": failed_images,
         **cluster,
     }
     log(f"[photo] 完成分析，主切入点：{result['primary_attention_angle']}", "OK")

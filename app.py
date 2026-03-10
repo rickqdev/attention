@@ -28,7 +28,6 @@ def _merge_context_prompt(extra_context):
 def run_attention(
     image_path,
     provider,
-    model_id,
     api_key,
     tavily_api_key,
     skip_viral_research,
@@ -47,7 +46,6 @@ def run_attention(
 
     set_runtime_options(
         provider=provider,
-        model_id=(model_id or "").strip(),
         api_keys=runtime_keys,
     )
     try:
@@ -71,17 +69,19 @@ def run_attention(
             photos_dir=Path(tmpdir),
             enable_viral_research=not skip_viral_research,
             provider=provider,
-            model_id=(model_id or "").strip(),
         )
         if photo_result.get("total_photos", 0) == 0:
             return "未检测到可分析图片。", None, "执行失败。"
+        if photo_result.get("error"):
+            return photo_result["error"], None, "视觉分析失败。"
 
         notes_result = copywriter.run(
             photo_data=photo_result,
             context_info=context_prompt,
             provider=provider,
-            model_id=(model_id or "").strip(),
         )
+        if notes_result.get("error"):
+            return notes_result["error"], None, "文案生成失败。"
         if notes_result.get("total", 0) == 0:
             return "文案生成失败，请更换图片或模型参数。", None, "执行失败。"
 
@@ -90,7 +90,6 @@ def run_attention(
         notes_result=notes_result,
         context_loaded=context_data,
         provider=provider,
-        model_id=(model_id or "").strip(),
     )
     _, md_path = write_outputs(run_result, BASE_DIR / "output")
     markdown = render_markdown(run_result)
@@ -116,11 +115,6 @@ API Key 只在本次运行内存中使用，不会写入磁盘。
                     choices=["gemini", "minimax", "auto"],
                     value="gemini",
                     label="Provider",
-                )
-                model_id = gr.Textbox(
-                    value="",
-                    label="Model ID（可选）",
-                    placeholder="留空使用默认模型",
                 )
                 api_key = gr.Textbox(
                     value="",
@@ -154,7 +148,6 @@ API Key 只在本次运行内存中使用，不会写入磁盘。
             inputs=[
                 image_input,
                 provider,
-                model_id,
                 api_key,
                 tavily_key,
                 skip_viral,

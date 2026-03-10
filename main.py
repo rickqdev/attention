@@ -40,11 +40,6 @@ def build_parser():
         help="模型提供方。auto 会优先 Gemini，失败后回退 MiniMax。",
     )
     parser.add_argument(
-        "--model-id",
-        default="",
-        help="可选模型 ID（按 provider 解释）。为空时使用默认模型。",
-    )
-    parser.add_argument(
         "--api-key",
         default="",
         help="运行时 API Key，不会写入磁盘。provider=auto 时按 Gemini key 处理。",
@@ -91,7 +86,6 @@ def ensure_config(provider, api_key="", tavily_api_key="", skip_viral_research=F
 
     optional_missing = []
     for key_name, label in (
-        ("glm_api_key", "GLM 文字兜底"),
         ("minimax_api_key", "MiniMax 可选兜底"),
     ):
         if not _has_config_key(cfg, key_name):
@@ -107,7 +101,7 @@ def ensure_config(provider, api_key="", tavily_api_key="", skip_viral_research=F
     return cfg
 
 
-def build_attention_result(photo_result, notes_result, context_loaded, provider, model_id):
+def build_attention_result(photo_result, notes_result, context_loaded, provider):
     intent_data = photo_result.get("intent", {})
     notes = notes_result.get("notes", [])
     copy_candidates = []
@@ -140,9 +134,9 @@ def build_attention_result(photo_result, notes_result, context_loaded, provider,
         "why_it_works": why_it_works,
         "meta": {
             "provider": provider,
-            "model_id": model_id or "",
             "photos_analyzed": photo_result.get("analyzed", 0),
             "source_images": photo_result.get("photo_filenames", []),
+            "failed_images": photo_result.get("failed_images", []),
         },
     }
 
@@ -215,7 +209,6 @@ def main():
     parser = build_parser()
     args = parser.parse_args()
     runtime_provider = args.provider
-    runtime_model_id = args.model_id.strip()
     runtime_key = args.api_key.strip()
     runtime_tavily_key = args.tavily_api_key.strip()
 
@@ -230,7 +223,6 @@ def main():
 
     set_runtime_options(
         provider=runtime_provider,
-        model_id=runtime_model_id,
         api_keys=runtime_keys,
     )
     ensure_config(
@@ -248,18 +240,22 @@ def main():
         photos_dir=Path(args.photos_dir),
         enable_viral_research=not args.skip_viral_research,
         provider=runtime_provider,
-        model_id=runtime_model_id,
     )
     if photo_result.get("total_photos", 0) == 0:
         log("未发现可分析图片，请把图片放进 photos/ 后再运行。", "ERR")
+        return 1
+    if photo_result.get("error"):
+        log(photo_result["error"], "ERR")
         return 1
 
     notes_result = copywriter.run(
         photo_data=photo_result,
         context_info=context_prompt,
         provider=runtime_provider,
-        model_id=runtime_model_id,
     )
+    if notes_result.get("error"):
+        log(notes_result["error"], "ERR")
+        return 1
     if notes_result.get("total", 0) == 0:
         log("文案生成失败，未输出可用结果。", "ERR")
         return 1
@@ -269,7 +265,6 @@ def main():
         notes_result=notes_result,
         context_loaded=context_data,
         provider=runtime_provider,
-        model_id=runtime_model_id,
     )
 
     json_path, md_path = write_outputs(run_result, args.output_dir)
