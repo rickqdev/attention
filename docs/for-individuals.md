@@ -1,9 +1,12 @@
-# For Individuals / 个人使用
+# For Individuals / 个人怎么用
 
-`attention` 面向个人使用者的默认模式是 `BYOK`。
+个人使用时，最简单的理解就是：
+- 你上传图片
+- 你自己填模型 key
+- 它帮你找图里的亮点，并给你一版文案草稿
 
 English:
-Use `attention` with your own provider key. The fastest path is Web/H5. The local CLI is useful when you already manage images in folders.
+For individual use, just upload an image, paste your own model key, and get a usable draft.
 
 ## 场景 1：桌面浏览器直接用
 
@@ -17,12 +20,12 @@ python3 app.py --inbrowser
 - 选择 `provider`
 - 粘贴你自己的 API key
 - 可选填写临时上下文
-- 生成图文草案
+- 点击生成
 
 适合：
-- 穿搭、美甲、饰品、探店、局部细节图
-- 快速找视觉切入点
-- 先拿一版中文草案再继续人工修改
+- 想快速出一版草稿
+- 想知道这张图该从哪里写
+- 想先有标题和正文，再自己改
 
 ## 场景 2：手机浏览器访问 H5
 
@@ -37,8 +40,8 @@ The Gradio UI is responsive enough for mobile browsers. You do not need a native
 - 粘贴自己的 key
 
 适合：
-- 没有电脑端工作流时快速出草案
-- 随手看图、随手改文案
+- 手上只有手机也想先出一版
+- 看完图就想顺手改文案
 
 ## 场景 3：本地 CLI 批量跑
 
@@ -53,9 +56,9 @@ attention-cli --provider gemini --api-key "$GEMINI_API_KEY" --skip-viral-researc
 - 输出 Markdown：`output/attention_YYYYMMDD.md`
 
 适合：
-- 你已经有一批图片
-- 想在本地保留一份结构化结果
-- 想把上下文模板和结果一起迭代
+- 你手里已经有一批图片
+- 想把结果保存成文件
+- 想反复改上下文再重跑
 
 ## 你需要准备什么
 

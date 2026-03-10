@@ -112,8 +112,8 @@ HERO_HTML = """
 <div class="attention-shell">
   <div class="attention-hero">
     <div class="attention-kicker">attention / 注意力</div>
-    <h1>先找出图里最值得展开的意图，再把它整理成清晰的图文草案</h1>
-    <p>上传一张图，识别视觉主角和用户最想追问的那一句话，再生成标题、正文和标签建议。不是堆文案技巧，而是先把真正会让人停下来的那个点找准、写清楚。</p>
+    <h1>先看图里最抓人的点，再给你一版文案草稿</h1>
+    <p>上传图片后，它会先告诉你这张图最该从哪里写，再生成标题、正文和标签建议。你可以直接拿来改，不用从空白开始。</p>
     <div class="attention-badges">
       <span>视觉切入</span>
       <span>问题提炼</span>
@@ -125,19 +125,19 @@ HERO_HTML = """
 
 VALUE_HTML = """
 <div class="attention-shell">
-  <h2 class="attention-section-title">为什么它不像普通文案工具</h2>
+  <h2 class="attention-section-title">它能帮你做什么</h2>
   <div class="attention-grid">
     <div class="attention-card">
       <h3>先解决“写什么”</h3>
-      <p>不是每张图都该从整体开始写，真正值得展开的，常常是一个细节、反差或追问点。</p>
+      <p>不是每张图都该从整体开始写，很多时候真正该写的是一个小细节。</p>
     </div>
     <div class="attention-card">
       <h3>再解决“怎么写”</h3>
-      <p>把这个点转成更清晰的标题、正文和标签草案，而不是堆模板句式。</p>
+      <p>把这个点直接变成标题、正文和标签草稿，省掉从零开始写的时间。</p>
     </div>
     <div class="attention-card">
       <h3>尽量避免乱编</h3>
-      <p>你可以补充真实信息，工具只负责放大亮点，不负责凭空补价格、品牌或教程细节。</p>
+      <p>你可以补充真实信息，它不会硬编价格、品牌或教程细节。</p>
     </div>
   </div>
 </div>
@@ -145,19 +145,19 @@ VALUE_HTML = """
 
 FEATURE_HTML = """
 <div class="attention-shell">
-  <h2 class="attention-section-title">它具体会帮你做什么</h2>
+  <h2 class="attention-section-title">输出给你的是什么</h2>
   <div class="attention-grid">
     <div class="attention-card">
       <h3>识别最该写的点</h3>
-      <p>从图片里找出最先抓住注意力的视觉主角，而不是泛泛描述“这张图很好看”。</p>
+      <p>先找出这张图里最容易让人停下来的那个点。</p>
     </div>
     <div class="attention-card">
       <h3>预测用户最想问什么</h3>
-      <p>把“看到这张图的人第一句会问什么”先找出来，文案开头就更容易抓住人。</p>
+      <p>先找出“别人看到这张图最可能会问什么”。</p>
     </div>
     <div class="attention-card">
       <h3>生成可继续修改的表达</h3>
-      <p>输出标题、正文和标签建议，让你更快得到一个结构清晰的图文初稿，而不是模板化营销稿。</p>
+      <p>给你一版能直接继续改的标题、正文和标签草稿。</p>
     </div>
   </div>
 </div>
@@ -166,10 +166,10 @@ FEATURE_HTML = """
 TRUST_HTML = """
 <div class="attention-shell">
   <div class="attention-note">
-    <p><strong>适合场景：</strong>个人账号、日常发图、穿搭、美甲、饰品、探店、局部细节这类需要“先抓注意力再展开”的内容。</p>
+    <p><strong>适合场景：</strong>日常发图、穿搭、美甲、饰品、探店、局部细节这类内容。</p>
   </div>
   <div class="attention-note">
-    <p><strong>边界说明：</strong>它不是自动发布工具，也不承诺爆款；它的价值是帮你先找到那个真正值得展开的切入点。</p>
+    <p><strong>边界说明：</strong>它不会自动发内容，也不保证爆款；它做的是帮你更快找到切入点。</p>
   </div>
 </div>
 """
@@ -235,13 +235,13 @@ def build_demo():
     faq_markdown = """
 ### FAQ
 **它和普通 AI 文案工具有什么区别？**  
-普通工具通常从空白开始写，`attention / 注意力` 会先从图片里找到最值得展开的那个点，再把它整理成更清晰的图文草案。
+普通工具往往上来就开始写，`attention / 注意力` 会先帮你看图，再出文案。
 
 **会不会乱编品牌、价格或教程细节？**  
-不会。你可以补充真实上下文，但如果没有明确提供，它会尽量只放大图中能支撑的亮点。
+不会。你没提供的信息，它不会硬写。
 
 **适合什么内容？**  
-尤其适合穿搭、美甲、饰品、探店、局部细节、日常发图这类需要“先抓眼再展开”的内容。
+适合穿搭、美甲、饰品、探店、局部细节、日常发图这类内容。
 """
 
     with gr.Blocks(title="attention / 注意力") as demo:
@@ -273,21 +273,21 @@ def build_demo():
                 )
                 extra_context = gr.Textbox(
                     value="",
-                    label="临时上下文（可选）",
+                    label="补充说明（可选）",
                     lines=4,
-                    placeholder="例如：主体是手工饰品，预算 99，地点上海。",
+                    placeholder="例如：这是手工饰品，预算 99，拍摄地点在上海。",
                 )
                 with gr.Row():
-                    run_btn = gr.Button("上传图片，生成图文草案", variant="primary")
+                    run_btn = gr.Button("开始生成", variant="primary")
                     example_btn = gr.Button("查看示例结果")
             with gr.Column(scale=1):
                 gr.Markdown("## 结果预览")
                 status = gr.Textbox(
                     label="结果状态",
                     interactive=False,
-                    value="上传图片后，我们会先告诉你什么最值得展开，再给出一份清晰的图文草案。",
+                    value="上传图片后，会先告诉你这张图最该从哪里写，再给你一版文案草稿。",
                 )
-                md_output = gr.Markdown(value="### 等你上传一张图\n先看视觉主角，再看用户最想问的那一句。")
+                md_output = gr.Markdown(value="### 等你上传一张图\n先找亮点，再看文案。")
                 json_output = gr.JSON(label="结构化结果", value=example_result)
 
         gr.HTML(FEATURE_HTML)

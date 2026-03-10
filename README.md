@@ -1,15 +1,15 @@
 # attention / 注意力
 
-**Find the attention-driving angle in an image, then turn it into clear, reusable copy.**  
-上传一张图，先找出最值得展开的意图，再把它整理成清晰、可继续修改的图文草案。
+**Find the most attention-grabbing angle in an image, then turn it into usable copy.**  
+上传一张图，帮你找出最抓人的点，再给你一版能直接改的文案草稿。
 
 ![attention demo](./assets/demo-ui.png)
 
-## 为什么它不是普通文案工具
+## 它能帮你做什么
 
-- 先解决“写什么”：不是每张图都该从整体开始写，真正值得展开的，常常是一个细节、反差或追问点。
-- 再解决“怎么写”：把这个点转成更清晰的标题、正文和标签草案，方便你继续改成自己的表达。
-- 尽量避免乱编：你可以补充真实信息，工具只负责放大亮点，不负责凭空补事实。
+- 先帮你找重点：图里最该写的点，往往不是整张图，而是一个细节。
+- 再给你文案草稿：标题、正文、标签一次给到，方便你继续改。
+- 尽量不乱编：你没提供的信息，它不会硬写。
 
 ## 30 秒上手 | Quick Start
 
@@ -21,15 +21,15 @@ python3 app.py --inbrowser
 打开 Gradio 页面后：
 - 上传图片
 - 选择 `provider`（`gemini` / `minimax` / `auto`）
-- 输入有效的 API key（仅本次运行使用，不落盘）
-- 点击 `上传图片，生成图文草案`
+- 输入你自己的 API key（只在这次运行里用，不会写进文件）
+- 点击 `开始生成`
 - 或点击 `查看示例结果`
 
-## 面向个人使用者 | For Individuals
+## 个人怎么用 | For Individuals
 
-- 桌面 Web/H5：`python3 app.py --inbrowser`
-- 手机浏览器：`python3 app.py --host 0.0.0.0` 后，用手机访问 `http://你的局域网IP:7860`
-- 本地批量处理：`attention-cli`
+- 电脑上直接用：`python3 app.py --inbrowser`
+- 手机上用：`python3 app.py --host 0.0.0.0` 后，用手机打开 `http://你的局域网IP:7860`
+- 想批量跑图片：`attention-cli`
 - 详细说明：[docs/for-individuals.md](./docs/for-individuals.md)
 
 ## 安装为包 | Install as a Package
@@ -93,11 +93,11 @@ attention-mcp
 - [docs/skill.md](./docs/skill.md)
 - [docs/for-developers.md](./docs/for-developers.md)
 
-## 它具体会帮你做什么
+## 输出给你的是什么
 
-- 识别最该写的点：从图片里找出最先抓住注意力的视觉主角，而不是泛泛描述“这张图很好看”。
-- 预测用户最想问什么：把“看到这张图的人第一句会问什么”先找出来，文案开头就更容易抓住人。
-- 生成可继续修改的表达：输出标题、正文和标签建议，让你更快得到一个结构清晰的图文初稿，而不是模板化营销稿。
+- 图里最吸引人的点
+- 看到图的人最可能会问的一句话
+- 一版可以直接继续改的中文文案
 
 ## 示例结果拆解
 
@@ -141,13 +141,13 @@ attention-mcp
 ## FAQ
 
 **它和普通 AI 文案工具有什么区别？**  
-普通工具通常从空白开始写，`attention / 注意力` 会先从图片里找到最值得展开的那个点，再把它整理成更清晰的图文草案。
+它不是上来就硬写一段话，而是先帮你看图，找到最值得写的那个点，再出文案。
 
 **适合什么内容？**  
-适合个人账号、日常发图、穿搭、美甲、饰品、探店、局部细节这类需要“先抓注意力再展开”的内容。
+适合日常发图、穿搭、美甲、饰品、探店、局部细节这类内容。
 
 **它不是做什么的？**  
-它不是自动发布工具，也不承诺爆款；它的价值是帮你先找到那个真正值得展开的切入点。
+它不会自动发内容，也不会保证爆款；它做的是帮你更快找到切入点。
 
 **它能被第三方接入吗？**  
 可以。仓库现在提供了 CLI、HTTP API、基础 `stdio MCP` 和可分发 skill，适合前端、插件、工作流系统和 Agent 使用。
