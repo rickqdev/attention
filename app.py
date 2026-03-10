@@ -125,38 +125,18 @@ HERO_HTML = """
 
 VALUE_HTML = """
 <div class="attention-shell">
-  <h2 class="attention-section-title">它能帮你做什么</h2>
+  <h2 class="attention-section-title">上传后你会得到什么</h2>
   <div class="attention-grid">
     <div class="attention-card">
-      <h3>先解决“写什么”</h3>
-      <p>不是每张图都该从整体开始写，很多时候真正该写的是一个小细节。</p>
-    </div>
-    <div class="attention-card">
-      <h3>再解决“怎么写”</h3>
-      <p>把这个点直接变成标题、正文和标签草稿，省掉从零开始写的时间。</p>
-    </div>
-    <div class="attention-card">
-      <h3>尽量避免乱编</h3>
-      <p>你可以补充真实信息，它不会硬编价格、品牌或教程细节。</p>
-    </div>
-  </div>
-</div>
-"""
-
-FEATURE_HTML = """
-<div class="attention-shell">
-  <h2 class="attention-section-title">输出给你的是什么</h2>
-  <div class="attention-grid">
-    <div class="attention-card">
-      <h3>识别最该写的点</h3>
+      <h3>图里最抓人的点</h3>
       <p>先找出这张图里最容易让人停下来的那个点。</p>
     </div>
     <div class="attention-card">
-      <h3>预测用户最想问什么</h3>
+      <h3>别人最想问的话</h3>
       <p>先找出“别人看到这张图最可能会问什么”。</p>
     </div>
     <div class="attention-card">
-      <h3>生成可继续修改的表达</h3>
+      <h3>一版文案草稿</h3>
       <p>给你一版能直接继续改的标题、正文和标签草稿。</p>
     </div>
   </div>
@@ -249,48 +229,51 @@ def build_demo():
         gr.HTML(VALUE_HTML)
         with gr.Row():
             with gr.Column(scale=1):
-                gr.Markdown("## 上传图片")
-                image_input = gr.Image(type="filepath", label="上传原图")
+                gr.Markdown("## 上传你的图片")
+                image_input = gr.Image(type="filepath", label="图片")
                 provider = gr.Dropdown(
                     choices=["gemini", "minimax", "auto"],
                     value="gemini",
-                    label="Provider",
+                    label="模型",
                 )
                 api_key = gr.Textbox(
                     value="",
-                    label="Provider API Key",
+                    label="你的 API Key",
                     type="password",
-                    placeholder="运行时输入，不会落盘",
+                    placeholder="只在这次使用，不会保存",
                 )
-                tavily_key = gr.Textbox(
-                    value="",
-                    label="Tavily API Key（可选）",
-                    type="password",
-                )
-                skip_viral = gr.Checkbox(
-                    value=True,
-                    label="跳过爆款线索抓取（更快）",
-                )
-                extra_context = gr.Textbox(
-                    value="",
-                    label="补充说明（可选）",
-                    lines=4,
-                    placeholder="例如：这是手工饰品，预算 99，拍摄地点在上海。",
-                )
+                with gr.Accordion("高级选项（可选）", open=False):
+                    tavily_key = gr.Textbox(
+                        value="",
+                        label="Tavily API Key",
+                        type="password",
+                    )
+                    skip_viral = gr.Checkbox(
+                        value=True,
+                        label="跳过爆款线索抓取（更快）",
+                    )
+                    extra_context = gr.Textbox(
+                        value="",
+                        label="补充说明",
+                        lines=4,
+                        placeholder="例如：这是手工饰品，预算 99，拍摄地点在上海。",
+                    )
                 with gr.Row():
                     run_btn = gr.Button("开始生成", variant="primary")
-                    example_btn = gr.Button("查看示例结果")
+                    example_btn = gr.Button("先看示例")
             with gr.Column(scale=1):
                 gr.Markdown("## 结果预览")
                 status = gr.Textbox(
-                    label="结果状态",
+                    label="当前状态",
                     interactive=False,
                     value="上传图片后，会先告诉你这张图最该从哪里写，再给你一版文案草稿。",
                 )
-                md_output = gr.Markdown(value="### 等你上传一张图\n先找亮点，再看文案。")
-                json_output = gr.JSON(label="结构化结果", value=example_result)
+                with gr.Tabs():
+                    with gr.Tab("文案结果"):
+                        md_output = gr.Markdown(value="### 等你上传一张图\n先找亮点，再看文案。")
+                    with gr.Tab("详细数据"):
+                        json_output = gr.JSON(label="结构化数据（开发者可看）", value=example_result)
 
-        gr.HTML(FEATURE_HTML)
         gr.HTML(TRUST_HTML)
 
         with gr.Accordion("查看示例结果拆解", open=False):
