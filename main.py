@@ -11,7 +11,7 @@ SUPPORTED_PROVIDERS = ("auto", "gemini", "minimax")
 
 def build_parser():
     parser = argparse.ArgumentParser(
-        description="attention / 注意力: 基于图片意图生成更能抓住注意力的中文文案。"
+        description="attention / 注意力: 先识别图片里最值得展开的意图，再生成清晰、可继续修改的中文图文草案。"
     )
     parser.add_argument(
         "--photos-dir",
@@ -26,12 +26,12 @@ def build_parser():
     parser.add_argument(
         "--skip-viral-research",
         action="store_true",
-        help="跳过可选的爆款线索抓取，仅根据图片和上下文生成文案。",
+        help="跳过可选的爆款线索抓取，仅根据图片意图和上下文生成图文。",
     )
     parser.add_argument(
         "--print-json",
         action="store_true",
-        help="在终端额外打印完整 JSON 结果。",
+        help="在终端额外打印完整 JSON 结果，便于查看意图和文案草案。",
     )
     parser.add_argument(
         "--provider",
