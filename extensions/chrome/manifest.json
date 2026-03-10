@@ -1,0 +1,18 @@
+{
+  "manifest_version": 3,
+  "name": "attention Browser Demo",
+  "version": "1.0.0",
+  "description": "Use attention HTTP API to analyze the strongest image hook on the current page.",
+  "permissions": [
+    "activeTab",
+    "scripting"
+  ],
+  "host_permissions": [
+    "<all_urls>",
+    "http://127.0.0.1:8000/*"
+  ],
+  "action": {
+    "default_title": "attention",
+    "default_popup": "popup.html"
+  }
+}

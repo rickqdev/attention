@@ -25,11 +25,22 @@ python3 app.py
 - 点击 `上传图片，生成图文草案`
 - 或点击 `查看示例结果`
 
+## 安装为包 | Install as a Package
+
+```bash
+python3 -m pip install -e .
+```
+
+可执行入口：
+- `attention-cli`
+- `attention-api`
+- `attention-mcp`
+
 ## CLI 用法 | CLI Usage
 
 ```bash
-python3 main.py --help
-python3 main.py --provider gemini --api-key "$GEMINI_API_KEY" --skip-viral-research
+attention-cli --help
+attention-cli --provider gemini --api-key "$GEMINI_API_KEY" --skip-viral-research
 ```
 
 默认路径约定：
@@ -37,6 +48,42 @@ python3 main.py --provider gemini --api-key "$GEMINI_API_KEY" --skip-viral-resea
 - 可选上下文：`context/context_YYYYMMDD.json`
 - 输出结果：`output/attention_YYYYMMDD.json`
 - 输出摘要：`output/attention_YYYYMMDD.md`
+
+## 开发者接入 | Developer Interfaces
+
+### HTTP API
+
+```bash
+attention-api
+```
+
+- `POST /v1/intent/analyze`
+- `POST /v1/copy/generate`
+
+文档：
+- [docs/http-api.md](./docs/http-api.md)
+- [docs/integration.md](./docs/integration.md)
+
+### MCP
+
+```bash
+attention-mcp
+```
+
+公开工具：
+- `analyze_image_intent`
+- `generate_attention_copy`
+
+文档：
+- [docs/mcp.md](./docs/mcp.md)
+
+### Skill
+
+仓库内包含可分发 skill：
+- [skills/attention-mcp/SKILL.md](./skills/attention-mcp/SKILL.md)
+
+说明：
+- [docs/skill.md](./docs/skill.md)
 
 ## 它具体会帮你做什么
 
@@ -56,23 +103,30 @@ python3 main.py --provider gemini --api-key "$GEMINI_API_KEY" --skip-viral-resea
 
 ## 输出契约 | Output Contract
 
-生成结果 JSON 至少包含：
+统一 schema：`attention.v1`
+
+公开响应至少包含：
+- `status`
 - `intent`
-- `user_question`
 - `copy_candidates`
 - `best_copy`
 - `why_it_works`
+- `meta`
 
 示例文件：
 - `examples/attention_sample.json`
 - `examples/attention_sample.md`
+- `examples/requests/analyze_path.json`
+- `examples/requests/analyze_base64.template.json`
+- `examples/requests/generate_copy.json`
 
 ## 安全与隐私 | Security
 
 - 仓库只提供 `config.example.json` 模板。
 - `config.json`、真实图片、日志、运行产物默认不会进入 Git。
-- UI 中输入的 key 只在内存中用于当前请求，不会自动写入文件。
+- UI、HTTP API、MCP 中输入的 key 只在当前请求内存中使用，不会自动写入文件。
 - 如果视觉分析失败，程序会明确报错，不会输出伪造成功结果。
+- 公开模式默认 `BYOK`。
 
 ## FAQ
 
@@ -85,7 +139,15 @@ python3 main.py --provider gemini --api-key "$GEMINI_API_KEY" --skip-viral-resea
 **它不是做什么的？**  
 它不是自动发布工具，也不承诺爆款；它的价值是帮你先找到那个真正值得展开的切入点。
 
+**它能被第三方接入吗？**  
+可以。仓库现在提供了 CLI、HTTP API、基础 `stdio MCP` 和可分发 skill，适合前端、插件、工作流系统和 Agent 使用。
+
+## Browser Demo
+
+仓库附带一个最小浏览器插件示例：
+- [extensions/chrome/README.md](./extensions/chrome/README.md)
+
 ## Scope (v1)
 
-- 保留：图片意图分析 + 文案生成核心链路 + Gradio 演示
+- 保留：图片意图分析 + 文案生成核心链路 + Gradio 演示 + HTTP API + 基础 MCP + Skill
 - 不包含：自动发布、评论监控、养号、变现等运营模块

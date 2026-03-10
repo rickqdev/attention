@@ -1,0 +1,9 @@
+{
+  "schema_version": "attention.v1",
+  "image": {
+    "base64": "BASE64_IMAGE_DATA",
+    "mime_type": "image/jpeg"
+  },
+  "provider": "auto",
+  "api_key": "YOUR_PROVIDER_API_KEY"
+}

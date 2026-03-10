@@ -20,6 +20,11 @@ _RUNTIME_OPTIONS = {
     "api_keys": {},
 }
 
+_PROVIDER_TRACE = {
+    "vision": "",
+    "text": "",
+}
+
 
 def get_config_path():
     env_path = os.environ.get("ATTENTION_CONFIG")
@@ -69,6 +74,22 @@ def clear_runtime_options():
     _RUNTIME_OPTIONS["provider"] = DEFAULT_PROVIDER
     _RUNTIME_OPTIONS["model_id"] = ""
     _RUNTIME_OPTIONS["api_keys"] = {}
+
+
+def clear_provider_trace(channel=None):
+    if channel:
+        _PROVIDER_TRACE[channel] = ""
+        return
+    _PROVIDER_TRACE["vision"] = ""
+    _PROVIDER_TRACE["text"] = ""
+
+
+def get_provider_trace():
+    return dict(_PROVIDER_TRACE)
+
+
+def _set_provider_trace(channel, provider_name):
+    _PROVIDER_TRACE[channel] = str(provider_name or "").strip().lower()
 
 
 def get_runtime_options():
@@ -295,6 +316,7 @@ def _run_provider(name, fn):
 def vision_request(prompt, images, provider=None, model_id=None):
     selected_provider = _selected_provider(provider)
     selected_model = _selected_model(model_id)
+    clear_provider_trace("vision")
 
     if selected_provider in ("gemini", "minimax"):
         mapping = {
@@ -304,6 +326,7 @@ def vision_request(prompt, images, provider=None, model_id=None):
         name, fn = mapping[selected_provider]
         result = _run_provider(name, fn)
         if result:
+            _set_provider_trace("vision", selected_provider)
             return result
         log(f"{name} 视觉分析失败。", "ERR")
         return None
@@ -319,6 +342,7 @@ def vision_request(prompt, images, provider=None, model_id=None):
     for name, fn in fallback_chain:
         result = _run_provider(name, fn)
         if result:
+            _set_provider_trace("vision", "gemini" if name == "Gemini" else "minimax")
             if name != "Gemini":
                 log(f"视觉模型自动降级到 {name}。", "WARN")
             return result
@@ -330,6 +354,7 @@ def vision_request(prompt, images, provider=None, model_id=None):
 def gemini_request(prompt, images=None, model=None, temperature=0.8, provider=None):
     selected_provider = _selected_provider(provider)
     selected_model = _selected_model(model)
+    clear_provider_trace("text")
 
     if selected_provider in ("gemini", "minimax", "glm", "qwen_local"):
         provider_map = {
@@ -351,6 +376,8 @@ def gemini_request(prompt, images=None, model=None, temperature=0.8, provider=No
         result = _run_provider(name, fn)
         if not result:
             log(f"{name} 请求失败。", "ERR")
+        else:
+            _set_provider_trace("text", selected_provider)
         return result
 
     providers = [
@@ -360,6 +387,7 @@ def gemini_request(prompt, images=None, model=None, temperature=0.8, provider=No
     for name, fn in providers:
         result = _run_provider(name, fn)
         if result:
+            _set_provider_trace("text", "gemini" if name == "Gemini" else "minimax")
             if name != "Gemini":
                 log(f"使用备用模型：{name}", "WARN")
             return result

@@ -1,14 +1,12 @@
 #!/usr/bin/env python3
 import json
-import shutil
 import tempfile
 from pathlib import Path
 
 import gradio as gr
 
-from main import build_attention_result, ensure_config, render_markdown, write_outputs
-from modules import context_loader, copywriter, photo_tagger
-from modules.base import BASE_DIR, set_runtime_options
+from attention import run_attention_pipeline
+from modules.base import BASE_DIR
 
 EXAMPLE_JSON_PATH = BASE_DIR / "examples" / "attention_sample.json"
 
@@ -174,23 +172,6 @@ TRUST_HTML = """
   </div>
 </div>
 """
-
-
-def _merge_context_prompt(extra_context):
-    context_loader.create_template()
-    ctx_data = context_loader.load()
-    prompt = context_loader.to_prompt_block(ctx_data)
-    extra = (extra_context or "").strip()
-    if not extra:
-        return ctx_data, prompt
-
-    if prompt:
-        merged = f"{prompt}\n- 临时补充：{extra}"
-    else:
-        merged = f"以下是临时补充上下文，请仅在有依据时使用：\n- {extra}"
-    return ctx_data, merged
-
-
 def _load_public_example():
     with open(EXAMPLE_JSON_PATH, encoding="utf-8") as handle:
         return json.load(handle)
@@ -199,7 +180,7 @@ def _load_public_example():
 def load_public_example():
     example_result = _load_public_example()
     return (
-        render_markdown(example_result),
+        example_result.get("markdown", ""),
         example_result,
         "已加载公开示例：先由细节建立切入点，再展开成完整图文。",
     )
@@ -216,65 +197,27 @@ def run_attention(
     if not image_path:
         return "请先上传一张图片。", None, "未执行。"
 
-    runtime_keys = {}
-    key = (api_key or "").strip()
-    if key:
-        runtime_keys[provider if provider in ("gemini", "minimax") else "gemini"] = key
-    tavily = (tavily_api_key or "").strip()
-    if tavily:
-        runtime_keys["tavily"] = tavily
-
-    set_runtime_options(
-        provider=provider,
-        api_keys=runtime_keys,
-    )
-    try:
-        ensure_config(
-            provider=provider,
-            api_key=key,
-            tavily_api_key=tavily,
-            skip_viral_research=skip_viral_research,
-        )
-    except SystemExit:
-        return "配置不足，请检查 provider 与 API key。", None, "执行失败。"
-
-    context_data, context_prompt = _merge_context_prompt(extra_context)
-
     with tempfile.TemporaryDirectory(prefix="attention_upload_") as tmpdir:
         src_path = Path(image_path)
         tmp_photo = Path(tmpdir) / src_path.name
-        shutil.copy2(src_path, tmp_photo)
+        tmp_photo.write_bytes(src_path.read_bytes())
 
-        photo_result = photo_tagger.run(
+        result = run_attention_pipeline(
             photos_dir=Path(tmpdir),
-            enable_viral_research=not skip_viral_research,
             provider=provider,
+            api_key=api_key,
+            tavily_api_key=tavily_api_key,
+            include_viral_research=not skip_viral_research,
+            extra_context=extra_context,
         )
-        if photo_result.get("total_photos", 0) == 0:
-            return "未检测到可分析图片。", None, "执行失败。"
-        if photo_result.get("error"):
-            return photo_result["error"], None, "视觉分析失败。"
+    if result.status != "ok":
+        if result.error:
+            return result.error.message, result.model_dump(exclude_none=True), "执行失败。"
+        return "执行失败。", result.model_dump(exclude_none=True), "执行失败。"
 
-        notes_result = copywriter.run(
-            photo_data=photo_result,
-            context_info=context_prompt,
-            provider=provider,
-        )
-        if notes_result.get("error"):
-            return notes_result["error"], None, "文案生成失败。"
-        if notes_result.get("total", 0) == 0:
-            return "文案生成失败，请更换图片或模型参数。", None, "执行失败。"
-
-    run_result = build_attention_result(
-        photo_result=photo_result,
-        notes_result=notes_result,
-        context_loaded=context_data,
-        provider=provider,
-    )
-    _, md_path = write_outputs(run_result, BASE_DIR / "output")
-    markdown = render_markdown(run_result)
-    status = f"已生成并写入：{md_path}"
-    return markdown, run_result, status
+    payload = result.model_dump(exclude_none=True)
+    status = "已完成图片分析和文案生成。"
+    return result.markdown, payload, status
 
 
 def build_demo():

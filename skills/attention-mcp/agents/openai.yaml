@@ -1,0 +1,7 @@
+interface:
+  display_name: "Attention MCP"
+  short_description: "Help analyze image hooks and draft copy with MCP"
+  default_prompt: "Use $attention-mcp to analyze an image and turn the strongest attention angle into Chinese copy."
+
+policy:
+  allow_implicit_invocation: true

@@ -1,1 +1,5 @@
 gradio>=5.22.0
+fastapi>=0.116.0
+uvicorn>=0.35.0
+mcp>=1.26.0
+pydantic>=2.11.0

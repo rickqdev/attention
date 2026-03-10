@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "attention"
+version = "1.0.0"
+description = "Image -> Attention Copy core, API, and MCP server."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [
+  { name = "Rick Qian" }
+]
+dependencies = [
+  "gradio>=5.22.0",
+  "fastapi>=0.116.0",
+  "uvicorn>=0.35.0",
+  "mcp>=1.26.0",
+  "pydantic>=2.11.0",
+]
+
+[project.scripts]
+attention-cli = "attention.cli:main"
+attention-api = "attention.api:main"
+attention-mcp = "attention.mcp_server:main"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+include = ["attention", "modules"]

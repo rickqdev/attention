@@ -1,0 +1,39 @@
+{
+  "schema_version": "attention.v1",
+  "intent": {
+    "hero_element": "蜘蛛装饰美甲",
+    "hero_reason": "局部细节反差强，第一眼最容易停住",
+    "supporting_elements": [
+      "紫色针织",
+      "库洛米发夹"
+    ],
+    "mood": "怪甜、轻微暗黑感",
+    "viewer_question": "这个蜘蛛装饰美甲是怎么做出来的？",
+    "attention_angle": "先用怪细节把人停住，再展开整张图的气氛",
+    "social_search_query": "蜘蛛美甲 紫色美甲",
+    "info_needed": [
+      "是否手作",
+      "是否定制"
+    ],
+    "relevance_score": 9
+  },
+  "context": {
+    "subject": {
+      "name": "",
+      "source": "",
+      "price": "",
+      "notes": ""
+    },
+    "supporting": [],
+    "scene": {
+      "location": "",
+      "time": "",
+      "feeling": ""
+    },
+    "extra": ""
+  },
+  "provider": "gemini",
+  "api_key": "YOUR_PROVIDER_API_KEY",
+  "include_viral_research": false,
+  "tavily_api_key": ""
+}

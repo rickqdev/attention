@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <title>attention</title>
+    <style>
+      body {
+        width: 360px;
+        margin: 0;
+        padding: 16px;
+        font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+        background: #fffaf4;
+        color: #222;
+      }
+      h1 {
+        margin: 0 0 8px;
+        font-size: 20px;
+      }
+      p {
+        margin: 0 0 12px;
+        line-height: 1.5;
+        font-size: 13px;
+      }
+      label {
+        display: block;
+        margin: 12px 0 6px;
+        font-size: 12px;
+        font-weight: 600;
+      }
+      input, select, textarea, button {
+        width: 100%;
+        box-sizing: border-box;
+        border-radius: 10px;
+        border: 1px solid #d8cfc2;
+        padding: 10px 12px;
+        font-size: 13px;
+      }
+      textarea {
+        min-height: 84px;
+        resize: vertical;
+      }
+      button {
+        margin-top: 14px;
+        border: none;
+        background: #2f5cff;
+        color: white;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .status {
+        margin-top: 14px;
+        padding: 10px 12px;
+        border-radius: 10px;
+        background: white;
+        border: 1px solid #e3ddd5;
+        font-size: 12px;
+        white-space: pre-wrap;
+      }
+      .result {
+        margin-top: 12px;
+        padding: 12px;
+        border-radius: 12px;
+        background: white;
+        border: 1px solid #e3ddd5;
+      }
+      .result h2 {
+        margin: 0 0 8px;
+        font-size: 15px;
+      }
+      .result strong {
+        display: block;
+        margin-top: 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>attention</h1>
+    <p>从当前页面抓取一张图片，调用本地 attention API，返回视觉切入和图文草案。</p>
+
+    <label for="apiBase">API Base</label>
+    <input id="apiBase" value="http://127.0.0.1:8000" />
+
+    <label for="provider">Provider</label>
+    <select id="provider">
+      <option value="gemini">gemini</option>
+      <option value="minimax">minimax</option>
+      <option value="auto">auto</option>
+    </select>
+
+    <label for="apiKey">Provider API Key</label>
+    <input id="apiKey" type="password" placeholder="仅本次使用，不会写盘" />
+
+    <label for="imageUrl">Image URL Override（可选）</label>
+    <input id="imageUrl" placeholder="不填则自动抓当前页最大图片" />
+
+    <label for="extraContext">Extra Context（可选）</label>
+    <textarea id="extraContext" placeholder="例如：主体是手工饰品，价格 99。"></textarea>
+
+    <button id="runButton">分析当前页面图片</button>
+
+    <div class="status" id="status">先启动本地 API：attention-api</div>
+    <div class="result" id="result" hidden>
+      <h2 id="hero"></h2>
+      <div id="question"></div>
+      <strong id="title"></strong>
+      <div id="content"></div>
+    </div>
+
+    <script src="popup.js"></script>
+  </body>
+  </html>
