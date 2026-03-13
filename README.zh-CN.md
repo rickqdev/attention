@@ -4,6 +4,8 @@
 
 ![attention demo](./assets/demo-ui.png)
 
+[60 秒了解并开始](https://rickqdev.github.io/attention/) | [开发者接入](./docs/for-developers.md) | [公开用例](./examples/use-cases/README.md) | [提交场景反馈](https://github.com/rickqdev/attention/issues/new/choose)
+
 ## 产品定位
 
 `attention` 不是从空白开始硬写文案的工具。  
@@ -39,6 +41,7 @@ python3 app.py --inbrowser
 
 更多说明：
 - [个人使用说明](./docs/for-individuals.md)
+- [60 秒开始页](https://rickqdev.github.io/attention/)
 
 ## 开发者接入
 
@@ -66,6 +69,14 @@ python3 -m pip install -e .
 - [MCP](./docs/mcp.md)
 - [Skill](./docs/skill.md)
 
+## 公开示例
+
+- [穿搭主图示例](./examples/use-cases/fashion-lookbook.md)
+- [饰品细节示例](./examples/use-cases/accessories-detail.md)
+- [咖啡氛围图示例](./examples/use-cases/cafe-detail.md)
+- [结构化 JSON 示例](./examples/attention_sample.json)
+- [Markdown 输出示例](./examples/attention_sample.md)
+
 ## 输出结构
 
 统一 schema：`attention.v1`
@@ -78,10 +89,6 @@ python3 -m pip install -e .
 - `why_it_works`
 - `meta`
 
-示例文件：
-- `examples/attention_sample.json`
-- `examples/attention_sample.md`
-
 ## 安全与隐私
 
 - 真实 key 不提交到仓库
@@ -89,17 +96,8 @@ python3 -m pip install -e .
 - `config.json`、日志、输出、真实图片默认不会进入 Git
 - 视觉分析失败时会明确报错，不会伪造成功结果
 
-## 当前范围
+## 路线与反馈
 
-v1 保留：
-- 图片意图分析
-- 文案生成
-- Gradio Demo
-- HTTP API
-- 基础 MCP
-- Skill
-
-v1 不包含：
-- 自动发布
-- 评论监控
-- 养号和运营模块
+- [ROADMAP](./ROADMAP.md)
+- [GitHub Discussions](https://github.com/rickqdev/attention/discussions)
+- [Issue 表单](https://github.com/rickqdev/attention/issues/new/choose)

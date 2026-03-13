@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>attention | image to hook, question, and draft</title>
+    <meta
+      name="description"
+      content="attention turns an image into its strongest visual hook, the viewer question it creates, and a usable copy draft."
+    />
+    <meta property="og:title" content="attention" />
+    <meta
+      property="og:description"
+      content="Turn an image into its strongest visual hook, the question viewers are most likely to ask, and a usable copy draft."
+    />
+    <meta property="og:image" content="https://rickqdev.github.io/attention/assets/social-preview.png" />
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #191513;
+        --muted: #5f5651;
+        --line: rgba(25, 21, 19, 0.1);
+        --warm: #fff7ef;
+        --accent: #f46a16;
+        --accent-strong: #cd4f00;
+        --violet: #6650d8;
+        --panel: rgba(255, 255, 255, 0.92);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Avenir Next", "Segoe UI", sans-serif;
+        color: var(--ink);
+        background:
+          radial-gradient(circle at top right, rgba(102, 80, 216, 0.14), transparent 28%),
+          linear-gradient(180deg, #fffdf9 0%, #fff7ef 100%);
+      }
+
+      a {
+        color: inherit;
+      }
+
+      .shell {
+        max-width: 1080px;
+        margin: 0 auto;
+        padding: 32px 20px 72px;
+      }
+
+      .hero {
+        display: grid;
+        grid-template-columns: minmax(0, 1.05fr) minmax(320px, 0.95fr);
+        gap: 24px;
+        align-items: center;
+        padding: 28px;
+        border: 1px solid var(--line);
+        border-radius: 28px;
+        background: linear-gradient(140deg, rgba(255, 255, 255, 0.95), rgba(255, 248, 239, 0.95));
+        box-shadow: 0 24px 54px rgba(36, 23, 7, 0.08);
+      }
+
+      .eyebrow {
+        display: inline-block;
+        padding: 7px 12px;
+        border-radius: 999px;
+        background: rgba(102, 80, 216, 0.09);
+        color: var(--violet);
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        font-size: clamp(40px, 7vw, 64px);
+        line-height: 0.98;
+        margin: 16px 0 14px;
+      }
+
+      .lede {
+        font-size: 18px;
+        line-height: 1.75;
+        margin: 0 0 18px;
+        color: var(--muted);
+      }
+
+      .lede strong {
+        color: var(--ink);
+      }
+
+      .cta-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 24px;
+      }
+
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 48px;
+        padding: 0 18px;
+        border-radius: 999px;
+        text-decoration: none;
+        font-weight: 700;
+        border: 1px solid transparent;
+      }
+
+      .btn-primary {
+        background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+        color: white;
+        box-shadow: 0 16px 32px rgba(244, 106, 22, 0.25);
+      }
+
+      .btn-secondary {
+        background: white;
+        border-color: rgba(25, 21, 19, 0.12);
+      }
+
+      .card-image {
+        width: 100%;
+        border-radius: 22px;
+        border: 1px solid var(--line);
+        box-shadow: 0 22px 44px rgba(22, 18, 15, 0.08);
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 18px;
+        margin-top: 24px;
+      }
+
+      .panel {
+        padding: 20px;
+        border-radius: 22px;
+        background: var(--panel);
+        border: 1px solid var(--line);
+        box-shadow: 0 14px 30px rgba(25, 21, 19, 0.05);
+      }
+
+      .panel h2,
+      .panel h3 {
+        margin-top: 0;
+      }
+
+      .section {
+        margin-top: 26px;
+      }
+
+      .section h2 {
+        font-size: 28px;
+        margin: 0 0 10px;
+      }
+
+      .section p,
+      .section li {
+        color: var(--muted);
+        line-height: 1.7;
+      }
+
+      ul {
+        margin: 12px 0 0;
+        padding-left: 18px;
+      }
+
+      code {
+        font-family: "SFMono-Regular", ui-monospace, monospace;
+        background: rgba(25, 21, 19, 0.05);
+        border-radius: 8px;
+        padding: 2px 6px;
+      }
+
+      .split {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 18px;
+      }
+
+      .footer {
+        margin-top: 26px;
+        font-size: 14px;
+        color: var(--muted);
+      }
+
+      @media (max-width: 860px) {
+        .hero,
+        .grid,
+        .split {
+          grid-template-columns: 1fr;
+        }
+
+        .shell {
+          padding: 20px 14px 44px;
+        }
+
+        .hero {
+          padding: 18px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="shell">
+      <section class="hero">
+        <div>
+          <span class="eyebrow">Image to hook to draft</span>
+          <h1>attention</h1>
+          <p class="lede">
+            <strong>Turn an image into its strongest visual hook, the question viewers are most likely to ask, and a usable copy draft.</strong>
+            <code>attention</code> is built for creators who post image-led content and developers who want that same <code>intent -&gt; copy</code> flow inside their own tools.
+          </p>
+          <p class="lede">
+            中文说明：先找到图片里最值得展开的注意力点，再生成一版可继续修改的中文文案草稿。
+          </p>
+          <div class="cta-row">
+            <a class="btn btn-primary" href="https://github.com/rickqdev/attention">Open the GitHub repo</a>
+            <a class="btn btn-secondary" href="https://github.com/rickqdev/attention/blob/main/docs/for-developers.md">Use via API / MCP</a>
+          </div>
+        </div>
+        <div>
+          <img class="card-image" src="./assets/demo-ui.png" alt="attention demo screenshot" />
+        </div>
+      </section>
+
+      <section class="section grid">
+        <article class="panel">
+          <h3>For creators</h3>
+          <p>Use the browser demo to upload an image, bring your own model key, and get a draft you can keep editing.</p>
+          <ul>
+            <li>Works well for fashion, accessories, cafe details, and mood-led posts.</li>
+            <li>Good when you know the image is strong but the caption is still vague.</li>
+          </ul>
+        </article>
+        <article class="panel">
+          <h3>For developers</h3>
+          <p>Integrate the same flow through CLI, HTTP API, MCP, or the packaged skill.</p>
+          <ul>
+            <li>Shared schema: <code>attention.v1</code></li>
+            <li>Best fit for creator tools, extensions, and agent workflows.</li>
+          </ul>
+        </article>
+        <article class="panel">
+          <h3>What to do next</h3>
+          <p>Start from the repo, then choose the path that matches how you want to use `attention`.</p>
+          <ul>
+            <li><a href="https://github.com/rickqdev/attention/blob/main/docs/for-individuals.md">Individual guide</a></li>
+            <li><a href="https://github.com/rickqdev/attention/blob/main/examples/use-cases/README.md">Public use cases</a></li>
+            <li><a href="https://github.com/rickqdev/attention/issues/new/choose">Share a use case</a></li>
+          </ul>
+        </article>
+      </section>
+
+      <section class="section split">
+        <article class="panel">
+          <h2>Try locally in under a minute</h2>
+          <p>Until a dedicated hosted demo is wired up, the fastest reliable path is the local browser demo.</p>
+          <ul>
+            <li><code>python3 -m pip install -r requirements.txt</code></li>
+            <li><code>python3 app.py --inbrowser</code></li>
+            <li>Upload an image and bring your own provider key.</li>
+          </ul>
+        </article>
+        <article class="panel">
+          <h2>Run one developer flow quickly</h2>
+          <ul>
+            <li><code>python3 -m pip install -e .</code></li>
+            <li><code>attention-api --host 127.0.0.1 --port 8000</code></li>
+            <li><code>python3 scripts/http_demo.py --image /absolute/path/to/image.jpg --provider gemini --api-key "$GEMINI_API_KEY"</code></li>
+          </ul>
+        </article>
+      </section>
+
+      <section class="section">
+        <div class="panel">
+          <h2>Example image patterns</h2>
+          <p>Start with the kind of image you care about, then see what `attention` should try to extract.</p>
+          <ul>
+            <li><a href="https://github.com/rickqdev/attention/blob/main/examples/use-cases/fashion-lookbook.md">Fashion / outfit focus</a></li>
+            <li><a href="https://github.com/rickqdev/attention/blob/main/examples/use-cases/accessories-detail.md">Accessories / detail focus</a></li>
+            <li><a href="https://github.com/rickqdev/attention/blob/main/examples/use-cases/cafe-detail.md">Cafe / mood shot focus</a></li>
+          </ul>
+        </div>
+      </section>
+
+      <p class="footer">
+        Repo: <a href="https://github.com/rickqdev/attention">rickqdev/attention</a>
+      </p>
+    </main>
+  </body>
+</html>

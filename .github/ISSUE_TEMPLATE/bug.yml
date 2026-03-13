@@ -1,0 +1,55 @@
+name: Bug report
+description: Report a reproducible problem in the demo, CLI, API, MCP, or skill.
+title: "[Bug] "
+labels:
+  - bug
+body:
+  - type: dropdown
+    id: surface
+    attributes:
+      label: Where did this happen?
+      options:
+        - Browser demo
+        - CLI
+        - HTTP API
+        - MCP
+        - Skill
+        - Docs
+    validations:
+      required: true
+  - type: input
+    id: provider
+    attributes:
+      label: Provider
+      description: Example: gemini, openai, auto
+      placeholder: gemini
+  - type: textarea
+    id: summary
+    attributes:
+      label: What happened?
+      description: Share the expected result and the actual result.
+      placeholder: The demo should have returned a structured result, but it failed after upload.
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Start the app with ...
+        2. Upload an image ...
+        3. Click generate ...
+        4. See error ...
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Error message or logs
+      description: Remove keys and private image data before posting.
+      render: shell
+  - type: textarea
+    id: context
+    attributes:
+      label: Anything else we should know?
+      description: Mention your OS, Python version, and whether you are using a private or public test image.

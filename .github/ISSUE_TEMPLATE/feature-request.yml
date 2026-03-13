@@ -1,0 +1,41 @@
+name: Feature request
+description: Suggest a product or integration improvement for creators or developers.
+title: "[Feature] "
+labels:
+  - enhancement
+body:
+  - type: dropdown
+    id: audience
+    attributes:
+      label: Who is this for?
+      options:
+        - Creators using the demo or CLI
+        - Developers using the API
+        - Developers using MCP or the skill
+        - Both creators and developers
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem are you trying to solve?
+      placeholder: I can get a draft, but I cannot quickly compare multiple hook directions for the same image.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What would you like to happen?
+      placeholder: Add a compare mode that keeps the same image and shows three hook strategies side by side.
+    validations:
+      required: true
+  - type: textarea
+    id: success
+    attributes:
+      label: What would success look like?
+      placeholder: I should be able to pick one direction without rerunning the whole flow.
+  - type: textarea
+    id: references
+    attributes:
+      label: References or examples
+      description: Link examples, screenshots, or similar tools if helpful.

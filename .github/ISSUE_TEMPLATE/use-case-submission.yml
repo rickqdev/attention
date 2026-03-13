@@ -1,0 +1,45 @@
+name: Use case submission
+description: Share an image pattern or creator workflow you want attention to support better.
+title: "[Use Case] "
+labels:
+  - use-case
+body:
+  - type: dropdown
+    id: user_type
+    attributes:
+      label: You are mainly using attention as
+      options:
+        - Individual creator
+        - Developer building a tool
+        - Both
+    validations:
+      required: true
+  - type: input
+    id: image_type
+    attributes:
+      label: What kind of image is it?
+      placeholder: accessory close-up, cafe countertop shot, nail detail, outfit mirror photo
+    validations:
+      required: true
+  - type: textarea
+    id: goal
+    attributes:
+      label: What outcome do you want from attention?
+      placeholder: I want it to find the detail that makes people stop and then draft a caption that leans into that curiosity.
+    validations:
+      required: true
+  - type: textarea
+    id: current_gap
+    attributes:
+      label: What is missing today?
+      placeholder: It describes the scene, but it does not lock onto the one detail viewers would ask about.
+  - type: textarea
+    id: workflow
+    attributes:
+      label: Which interface are you using?
+      placeholder: Browser demo, API, MCP, skill, or another workflow.
+  - type: textarea
+    id: notes
+    attributes:
+      label: Extra context
+      description: Describe the image pattern if you cannot share the image publicly.

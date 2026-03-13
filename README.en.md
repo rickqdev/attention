@@ -1,105 +1,57 @@
 # attention
 
-Find the most attention-grabbing angle in an image, then turn it into usable copy.
+Turn an image into its strongest visual hook, the question viewers are most likely to ask, and a usable copy draft.
 
 ![attention demo](./assets/demo-ui.png)
 
-## What It Is
+[Try attention in 60s](https://rickqdev.github.io/attention/) | [Use via API / MCP](./docs/for-developers.md) | [Browse examples](./examples/use-cases/README.md) | [Share a use case](https://github.com/rickqdev/attention/issues/new/choose)
 
-`attention` is not a blank-page copywriting tool.  
-It first identifies the strongest visual hook in an image, then extracts the question a viewer is most likely to ask, and finally turns that into reusable copy.
+This is the English-first project overview. For the detailed Chinese guide, see [README.zh-CN.md](./README.zh-CN.md).
 
-Good fit for:
-- daily image posts
-- fashion, nails, accessories
-- cafes, detail shots, mood-driven content
+## What You Get
 
-Out of scope:
-- automatic publishing
-- guaranteed virality
-- inventing facts you did not provide
+- the strongest attention hook in an image
+- the question viewers are most likely to ask next
+- a draft you can keep editing instead of starting from zero
+- a structured `attention.v1` response for product and workflow reuse
 
-## For Individuals
+## Try It Now
 
-Fastest path:
+### For Creators
 
 ```bash
 python3 -m pip install -r requirements.txt
 python3 app.py --inbrowser
 ```
 
-What you need:
-- an image
-- your own model key
+- [60-second quickstart](https://rickqdev.github.io/attention/)
+- [individual usage guide](./docs/for-individuals.md)
 
-What you get:
-- the strongest attention hook in the image
-- the question viewers are most likely to ask
-- a Chinese draft you can keep editing
-
-More:
-- [Individual usage guide](./docs/for-individuals.md)
-
-## For Developers
-
-Install:
+### For Developers
 
 ```bash
 python3 -m pip install -r requirements.txt
 python3 -m pip install -e .
+attention-api --host 127.0.0.1 --port 8000
+python3 scripts/http_demo.py --image /absolute/path/to/image.jpg --provider gemini --api-key "$GEMINI_API_KEY"
 ```
 
-Entry points:
-- `attention-cli`
-- `attention-api`
-- `attention-mcp`
-
-Open interfaces:
-- CLI for local batch runs
-- HTTP API for web apps, extensions, and backend services
-- MCP for agents and workflow systems
-- Skill for Codex/agent integrations
-
-Developer docs:
-- [Developer guide](./docs/for-developers.md)
+- [developer guide](./docs/for-developers.md)
 - [HTTP API](./docs/http-api.md)
 - [MCP](./docs/mcp.md)
 - [Skill](./docs/skill.md)
 
-## Output Contract
+## Example Outputs
 
-Unified schema: `attention.v1`
+- [fashion / outfit focus](./examples/use-cases/fashion-lookbook.md)
+- [accessories / detail focus](./examples/use-cases/accessories-detail.md)
+- [cafe / mood shot focus](./examples/use-cases/cafe-detail.md)
+- [`examples/attention_sample.json`](./examples/attention_sample.json)
 
-Core response fields:
-- `status`
-- `intent`
-- `copy_candidates`
-- `best_copy`
-- `why_it_works`
-- `meta`
+## Limits
 
-Examples:
-- `examples/attention_sample.json`
-- `examples/attention_sample.md`
-
-## Security
-
-- real keys are not committed
-- runtime keys are not written to disk automatically
-- `config.json`, logs, outputs, and real photos stay out of Git by default
-- failed vision analysis returns explicit errors instead of fake success
-
-## Current Scope
-
-Included in v1:
-- image intent analysis
-- copy generation
-- Gradio demo
-- HTTP API
-- base MCP server
-- skill
-
-Not included in v1:
-- auto-posting
-- comment monitoring
-- account operations modules
+- BYOK by default
+- no automatic publishing
+- no guaranteed virality
+- no invented facts
+- no silent success on failed vision analysis

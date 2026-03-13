@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Questions and setup help
+    url: https://github.com/rickqdev/attention/discussions
+    about: Ask about the demo, CLI, API, MCP, or skill in Discussions.
+  - name: 60-second quickstart
+    url: https://rickqdev.github.io/attention/
+    about: Start from the creator-friendly quickstart page.

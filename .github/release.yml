@@ -1,0 +1,22 @@
+changelog:
+  categories:
+    - title: Creator flow
+      labels:
+        - creator-flow
+        - ux
+    - title: Developer integrations
+      labels:
+        - api
+        - mcp
+        - skill
+        - developer-experience
+    - title: Docs and examples
+      labels:
+        - documentation
+        - use-case
+    - title: Fixes
+      labels:
+        - bug
+  exclude:
+    labels:
+      - skip-changelog
