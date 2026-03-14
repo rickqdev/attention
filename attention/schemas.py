@@ -122,8 +122,7 @@ class GenerateAttentionCopyRequest(BaseModel):
     context: CopyContext = Field(default_factory=CopyContext)
     provider: ProviderName = "auto"
     api_key: str = ""
-    include_viral_research: bool = False
-    tavily_api_key: str = ""
+    include_viral_research: bool = True
 
 
 class GenerateAttentionCopyResponse(BaseModel):

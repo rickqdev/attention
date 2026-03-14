@@ -278,6 +278,36 @@ DEMO_CSS = """
     font-size: 24px;
   }
 }
+/* Force light theme globally */
+.gradio-container, .gradio-container .contain, body,
+.dark .gradio-container, .dark body {
+  background: #fafafa !important;
+  color: #1f1f1f !important;
+}
+.dark h1, .dark h2, .dark h3, .dark h4, .dark p, .dark span, .dark li, .dark label, .dark td, .dark th,
+.gradio-container h1, .gradio-container h2, .gradio-container h3, .gradio-container h4,
+.gradio-container p, .gradio-container span, .gradio-container li, .gradio-container label,
+.gradio-container td, .gradio-container th,
+.dark .prose *, .prose * {
+  color: #1f1f1f !important;
+}
+.dark input, .dark textarea, .dark select,
+input, textarea, select {
+  background: #ffffff !important;
+  color: #1f1f1f !important;
+  border-color: rgba(20, 20, 20, 0.15) !important;
+}
+.dark .block, .block {
+  background: #ffffff !important;
+  border-color: rgba(20, 20, 20, 0.1) !important;
+}
+.dark button.primary, button.primary {
+  color: #ffffff !important;
+}
+.dark .accordion, .accordion {
+  background: #ffffff !important;
+  color: #1f1f1f !important;
+}
 """
 
 HERO_HTML = """
@@ -502,8 +532,6 @@ def run_attention(
     image_path,
     provider,
     api_key,
-    tavily_api_key,
-    skip_viral_research,
     extra_context,
 ):
     if not image_path:
@@ -526,8 +554,7 @@ def run_attention(
             photos_dir=Path(tmpdir),
             provider=provider,
             api_key=api_key,
-            tavily_api_key=tavily_api_key,
-            include_viral_research=not skip_viral_research,
+            include_viral_research=True,
             extra_context=extra_context,
         )
     if result.status != "ok":
@@ -584,7 +611,7 @@ def build_demo():
 适合穿搭、美甲、饰品、探店、局部细节、日常发图这类内容。
 """
 
-    with gr.Blocks(title="attention / 注意力") as demo:
+    with gr.Blocks(title="attention / 注意力", theme=gr.themes.Default(), css=DEMO_CSS) as demo:
         gr.HTML(HERO_HTML)
         stepper = gr.HTML(render_stepper(1))
         with gr.Row(elem_classes="attention-workbench"):
@@ -612,16 +639,7 @@ def build_demo():
                     type="password",
                     placeholder="只在这次使用，不会保存",
                 )
-                with gr.Accordion("高级选项（可选）", open=False):
-                    tavily_key = gr.Textbox(
-                        value="",
-                        label="Tavily API Key",
-                        type="password",
-                    )
-                    skip_viral = gr.Checkbox(
-                        value=True,
-                        label="跳过爆款线索抓取（更快）",
-                    )
+                with gr.Accordion("补充说明（可选）", open=False):
                     extra_context = gr.Textbox(
                         value="",
                         label="补充说明",
@@ -691,8 +709,6 @@ def build_demo():
                 image_input,
                 provider,
                 api_key,
-                tavily_key,
-                skip_viral,
                 extra_context,
             ],
             outputs=[
@@ -757,7 +773,6 @@ def main():
         share=args.share,
         inbrowser=args.inbrowser,
         show_error=True,
-        css=DEMO_CSS,
     )
 
 

@@ -5,6 +5,7 @@ from .core import (
     run_attention_pipeline,
     write_outputs,
 )
+from .pipeline import Pipeline, PipelineState
 from .schemas import (
     AnalyzeImageIntentRequest,
     AnalyzeImageIntentResponse,
@@ -18,6 +19,8 @@ __all__ = [
     "render_markdown",
     "run_attention_pipeline",
     "write_outputs",
+    "Pipeline",
+    "PipelineState",
     "AnalyzeImageIntentRequest",
     "AnalyzeImageIntentResponse",
     "GenerateAttentionCopyRequest",
