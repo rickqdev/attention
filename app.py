@@ -1,383 +1,298 @@
 #!/usr/bin/env python3
+"""attention / 注意力 — 九宫格选图引擎 Web UI"""
+
 import argparse
 import html
 import json
+import logging
+import shutil
 import tempfile
 from pathlib import Path
+
+logger = logging.getLogger("attention.app")
 
 import gradio as gr
 
 from attention import run_attention_pipeline
+from attention.grid_render import render_grid_png
 from modules.base import BASE_DIR
 
 EXAMPLE_JSON_PATH = BASE_DIR / "examples" / "attention_sample.json"
 
+# ---------------------------------------------------------------------------
+# CSS
+# ---------------------------------------------------------------------------
+
 DEMO_CSS = """
-.attention-shell {
-  max-width: 1120px;
-  margin: 0 auto;
-}
+.attention-shell { max-width: 1120px; margin: 0 auto; }
+
+/* Hero */
 .attention-hero {
-  padding: 30px 30px 28px;
-  border-radius: 22px;
-  background:
-    radial-gradient(circle at top right, rgba(121, 80, 242, 0.18), transparent 36%),
+  padding: 30px 30px 28px; border-radius: 22px;
+  background: radial-gradient(circle at top right, rgba(121,80,242,0.18), transparent 36%),
     linear-gradient(140deg, #fff8ef 0%, #ffffff 45%, #f6f2ff 100%);
-  border: 1px solid rgba(137, 106, 255, 0.18);
-  box-shadow: 0 22px 44px rgba(113, 83, 191, 0.08);
+  border: 1px solid rgba(137,106,255,0.18);
+  box-shadow: 0 22px 44px rgba(113,83,191,0.08);
   margin-bottom: 28px;
 }
 .attention-kicker {
-  display: inline-block;
-  font-size: 12px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  padding: 6px 10px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.9);
-  border: 1px solid rgba(137, 106, 255, 0.16);
+  display: inline-block; font-size: 12px; letter-spacing: 0.08em;
+  text-transform: uppercase; padding: 6px 10px; border-radius: 999px;
+  background: rgba(255,255,255,0.9); border: 1px solid rgba(137,106,255,0.16);
 }
-.attention-hero h1 {
-  font-size: 42px;
-  line-height: 1.12;
-  margin: 14px 0 12px;
-}
-.attention-hero p {
-  font-size: 16px;
-  line-height: 1.7;
-  margin: 0;
-  max-width: 760px;
-}
-.attention-badges {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  margin-top: 16px;
-}
+.attention-hero h1 { font-size: 38px; line-height: 1.15; margin: 14px 0 12px; }
+.attention-hero p { font-size: 16px; line-height: 1.7; margin: 0; max-width: 760px; }
+.attention-badges { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
 .attention-badges span {
-  padding: 7px 12px;
-  border-radius: 999px;
-  background: rgba(76, 47, 160, 0.08);
-  color: #4c2fa0;
-  font-size: 13px;
-  font-weight: 600;
+  padding: 7px 12px; border-radius: 999px;
+  background: rgba(76,47,160,0.08); color: #4c2fa0;
+  font-size: 13px; font-weight: 600;
 }
-.attention-stepper {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
-  margin: 0 0 30px;
-}
-.attention-step {
-  border-radius: 18px;
-  border: 1px solid rgba(20, 20, 20, 0.08);
-  background: rgba(255, 255, 255, 0.92);
-  padding: 16px;
-  box-shadow: 0 10px 24px rgba(20, 20, 20, 0.04);
-}
-.attention-step.is-active {
-  border-color: rgba(247, 106, 0, 0.28);
-  box-shadow: 0 14px 30px rgba(247, 106, 0, 0.08);
-  background: linear-gradient(180deg, #fffaf4 0%, #ffffff 100%);
-}
-.attention-step.is-done {
-  border-color: rgba(76, 47, 160, 0.16);
-  background: linear-gradient(180deg, #faf7ff 0%, #ffffff 100%);
-}
-.attention-step-index {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 999px;
-  font-size: 13px;
-  font-weight: 700;
-  background: rgba(20, 20, 20, 0.06);
-  color: #1f1f1f;
-  margin-bottom: 12px;
-}
-.attention-step.is-active .attention-step-index {
-  background: #f76a00;
-  color: #ffffff;
-}
-.attention-step.is-done .attention-step-index {
-  background: #4c2fa0;
-  color: #ffffff;
-}
-.attention-step-title {
-  font-size: 18px;
-  font-weight: 700;
-  margin-bottom: 6px;
-}
-.attention-step-copy {
-  font-size: 14px;
-  line-height: 1.65;
-  color: #4d4d4d;
-}
-.attention-section-title {
-  margin: 0 0 8px;
-  font-size: 28px;
-}
-.attention-subtitle {
-  margin: 0 0 18px;
-  font-size: 15px;
-  line-height: 1.7;
-  color: #555;
-}
-.attention-workbench {
-  display: grid;
-  grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
-  gap: 20px;
-  align-items: start;
-  margin-bottom: 28px;
-}
+
+/* Panels */
 .attention-panel {
-  padding: 22px;
-  border-radius: 22px;
-  border: 1px solid rgba(20, 20, 20, 0.08);
-  background: rgba(255, 255, 255, 0.95);
-  box-shadow: 0 16px 36px rgba(20, 20, 20, 0.05);
+  padding: 22px; border-radius: 22px;
+  border: 1px solid rgba(20,20,20,0.08);
+  background: rgba(255,255,255,0.95);
+  box-shadow: 0 16px 36px rgba(20,20,20,0.05);
 }
-.attention-panel h3 {
-  margin: 0 0 8px;
-  font-size: 22px;
-}
-.attention-panel p {
-  margin: 0;
-  line-height: 1.65;
-  font-size: 14px;
-}
-.attention-step-block {
-  margin-top: 18px;
-}
-.attention-step-block:first-of-type {
-  margin-top: 0;
-}
-.attention-step-label {
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: #6f6f6f;
-  margin: 0 0 10px;
-}
+.attention-panel h3 { margin: 0 0 8px; font-size: 22px; }
+.attention-panel p { margin: 0; line-height: 1.65; font-size: 14px; }
+.attention-subtitle { margin: 0 0 18px; font-size: 15px; line-height: 1.7; color: #555; }
 .attention-flow-note {
-  margin: 0 0 14px;
-  padding: 12px 14px;
-  border-radius: 14px;
-  background: #fff7ee;
-  border: 1px solid rgba(247, 106, 0, 0.14);
-  color: #6b4a21;
-  line-height: 1.7;
+  margin: 0 0 14px; padding: 12px 14px; border-radius: 14px;
+  background: #fff7ee; border: 1px solid rgba(247,106,0,0.14);
+  color: #6b4a21; line-height: 1.7;
 }
-.attention-result-shell {
-  margin-bottom: 24px;
+
+/* 9-Grid Visual */
+.attention-grid-preview {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  margin: 16px 0;
+  max-width: 480px;
 }
+.attention-grid-cell {
+  aspect-ratio: 3/4;
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+  background: #f0f0f0;
+  border: 2px solid transparent;
+}
+.attention-grid-cell.is-cover {
+  border-color: #f76a00;
+  box-shadow: 0 0 0 2px rgba(247,106,0,0.3);
+}
+.attention-grid-cell img {
+  width: 100%; height: 100%; object-fit: cover;
+}
+.attention-grid-badge {
+  position: absolute; top: 4px; left: 4px;
+  padding: 2px 6px; border-radius: 4px;
+  font-size: 11px; font-weight: 700; color: #fff;
+  background: rgba(0,0,0,0.55);
+}
+.attention-grid-cell.is-cover .attention-grid-badge {
+  background: #f76a00;
+}
+.attention-grid-role {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  padding: 3px 6px; font-size: 10px; color: #fff;
+  background: linear-gradient(transparent, rgba(0,0,0,0.6));
+  text-align: center;
+}
+.attention-grid-score {
+  position: absolute; top: 4px; right: 4px;
+  padding: 2px 5px; border-radius: 4px;
+  font-size: 10px; font-weight: 600; color: #fff;
+  background: rgba(76,47,160,0.7);
+}
+
+/* Result card */
 .attention-result-card {
-  padding: 24px;
-  border-radius: 22px;
-  border: 1px solid rgba(20, 20, 20, 0.08);
+  padding: 24px; border-radius: 22px;
+  border: 1px solid rgba(20,20,20,0.08);
   background: linear-gradient(180deg, #ffffff 0%, #fffdf8 100%);
-  box-shadow: 0 16px 36px rgba(20, 20, 20, 0.05);
+  box-shadow: 0 16px 36px rgba(20,20,20,0.05);
 }
-.attention-result-card h3 {
-  margin: 0 0 8px;
-  font-size: 30px;
-  line-height: 1.2;
-}
-.attention-result-card p {
-  margin: 0;
-  line-height: 1.75;
-  color: #2f2f2f;
-}
+.attention-result-card h3 { margin: 0 0 8px; font-size: 28px; line-height: 1.2; }
+.attention-result-card p { margin: 0; line-height: 1.75; color: #2f2f2f; }
 .attention-result-kicker {
-  display: inline-block;
-  margin-bottom: 12px;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: #7a5b1d;
-  background: #fff5df;
-  border-radius: 999px;
-  padding: 7px 10px;
+  display: inline-block; margin-bottom: 12px; font-size: 12px; font-weight: 700;
+  letter-spacing: 0.08em; text-transform: uppercase; color: #7a5b1d;
+  background: #fff5df; border-radius: 999px; padding: 7px 10px;
 }
-.attention-result-subhead {
-  font-size: 14px;
-  font-weight: 700;
-  color: #6a6a6a;
-  margin: 18px 0 8px;
-}
-.attention-result-list {
-  margin: 0;
-  padding-left: 18px;
-  line-height: 1.75;
-}
-.attention-tags {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-top: 10px;
-}
+.attention-result-subhead { font-size: 14px; font-weight: 700; color: #6a6a6a; margin: 18px 0 8px; }
+.attention-result-list { margin: 0; padding-left: 18px; line-height: 1.75; }
+.attention-tags { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
 .attention-tags span {
-  border-radius: 999px;
-  padding: 7px 10px;
-  background: rgba(76, 47, 160, 0.08);
-  color: #4c2fa0;
-  font-size: 13px;
-  font-weight: 600;
+  border-radius: 999px; padding: 7px 10px;
+  background: rgba(76,47,160,0.08); color: #4c2fa0;
+  font-size: 13px; font-weight: 600;
 }
-.attention-empty {
-  padding: 20px;
-  border-radius: 18px;
-  background: #fafafa;
-  border: 1px dashed rgba(20, 20, 20, 0.12);
-  color: #616161;
-  line-height: 1.7;
+
+/* Excluded table */
+.attention-excluded-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 8px; }
+.attention-excluded-table th { text-align: left; padding: 6px 8px; border-bottom: 2px solid #e0e0e0; color: #666; }
+.attention-excluded-table td { padding: 6px 8px; border-bottom: 1px solid #f0f0f0; }
+
+/* Narrative bar */
+.attention-narrative {
+  padding: 14px 18px; border-radius: 14px; margin: 12px 0;
+  background: linear-gradient(90deg, #f6f2ff, #fff8ef);
+  border: 1px solid rgba(137,106,255,0.12);
+  font-size: 14px; line-height: 1.7; color: #3d3066;
 }
-.attention-note {
-  padding: 16px 18px;
-  border-radius: 16px;
-  border: 1px solid rgba(20, 20, 20, 0.08);
-  background: linear-gradient(180deg, #ffffff 0%, #fffaf2 100%);
-  margin: 10px 0;
-}
-.attention-note p {
-  margin: 0;
-  line-height: 1.7;
-}
-.attention-example-panel {
-  padding: 18px 20px;
-  border-radius: 18px;
-  border: 1px dashed rgba(20, 20, 20, 0.12);
-  background: #fffdf8;
-  margin: 22px 0 10px;
-}
-.attention-example-panel h3 {
-  margin: 0 0 8px;
-  font-size: 20px;
-}
-.attention-example-panel p {
-  margin: 0 0 12px;
-  line-height: 1.7;
-  color: #4c4c4c;
-}
-@media (max-width: 900px) {
-  .attention-stepper,
-  .attention-workbench {
-    grid-template-columns: 1fr;
-  }
-  .attention-hero h1 {
-    font-size: 32px;
-  }
-  .attention-panel {
-    padding: 18px;
-  }
-  .attention-result-card h3 {
-    font-size: 24px;
-  }
-}
-/* Force light theme globally */
+
+/* Force light theme */
 .gradio-container, .gradio-container .contain, body,
 .dark .gradio-container, .dark body {
-  background: #fafafa !important;
+  background: #fafafa !important; color: #1f1f1f !important;
+}
+.dark h1,.dark h2,.dark h3,.dark h4,.dark p,.dark span,.dark li,.dark label,.dark td,.dark th,
+.gradio-container h1,.gradio-container h2,.gradio-container h3,.gradio-container h4,
+.gradio-container p,.gradio-container span,.gradio-container li,.gradio-container label,
+.gradio-container td,.gradio-container th, .dark .prose *, .prose * {
   color: #1f1f1f !important;
 }
-.dark h1, .dark h2, .dark h3, .dark h4, .dark p, .dark span, .dark li, .dark label, .dark td, .dark th,
-.gradio-container h1, .gradio-container h2, .gradio-container h3, .gradio-container h4,
-.gradio-container p, .gradio-container span, .gradio-container li, .gradio-container label,
-.gradio-container td, .gradio-container th,
-.dark .prose *, .prose * {
-  color: #1f1f1f !important;
+.dark input,.dark textarea,.dark select, input,textarea,select {
+  background: #ffffff !important; color: #1f1f1f !important;
+  border-color: rgba(20,20,20,0.15) !important;
 }
-.dark input, .dark textarea, .dark select,
-input, textarea, select {
-  background: #ffffff !important;
-  color: #1f1f1f !important;
-  border-color: rgba(20, 20, 20, 0.15) !important;
-}
-.dark .block, .block {
-  background: #ffffff !important;
-  border-color: rgba(20, 20, 20, 0.1) !important;
-}
-.dark button.primary, button.primary {
-  color: #ffffff !important;
-}
-.dark .accordion, .accordion {
-  background: #ffffff !important;
-  color: #1f1f1f !important;
+.dark .block,.block { background: #ffffff !important; border-color: rgba(20,20,20,0.1) !important; }
+.dark button.primary,button.primary { color: #ffffff !important; }
+.dark .accordion,.accordion { background: #ffffff !important; color: #1f1f1f !important; }
+
+@media (max-width: 900px) {
+  .attention-hero h1 { font-size: 28px; }
+  .attention-grid-preview { max-width: 100%; }
+  .attention-panel { padding: 16px; }
 }
 """
+
+# ---------------------------------------------------------------------------
+# Static HTML
+# ---------------------------------------------------------------------------
 
 HERO_HTML = """
 <div class="attention-shell">
   <div class="attention-hero">
     <div class="attention-kicker">attention / 注意力</div>
-    <h1>先看图里最抓人的点，再给你一版文案草稿</h1>
-    <p>这不是从空白开始写文案，而是先帮你看图、找重点，再把结果整理成一版可以直接继续改的草稿。</p>
+    <h1>扔一堆图进来，帮你选出最强九宫格</h1>
+    <p>从 15-50 张图里自动选出最强 9 张、排好封面和顺序、写出整组文案。三步搞定小红书发图。</p>
     <div class="attention-badges">
-      <span>视觉切入</span>
-      <span>问题提炼</span>
-      <span>文案草案</span>
+      <span>AI 选图</span>
+      <span>封面推荐</span>
+      <span>九宫格编排</span>
+      <span>整组文案</span>
     </div>
   </div>
 </div>
 """
 
-TRUST_HTML = """
-<div class="attention-shell">
-  <div class="attention-note">
-    <p><strong>适合场景：</strong>日常发图、穿搭、美甲、饰品、探店、局部细节这类内容。</p>
-  </div>
-  <div class="attention-note">
-    <p><strong>边界说明：</strong>它不会自动发内容，也不保证爆款；它做的是帮你更快找到切入点。</p>
-  </div>
-</div>
-"""
-
-EXAMPLE_PANEL_HTML = """
-<div class="attention-shell">
-  <div class="attention-example-panel">
-    <h3>想先看看结果长什么样？</h3>
-    <p>你可以先载入一份公开示例，再决定是否上传自己的图片。示例只用于理解结果结构，不会覆盖你之后的真实生成。</p>
-  </div>
-</div>
-"""
-
-
-def render_stepper(current_step):
-    steps = [
-        ("1", "上传图片", "先选一张你想写的图。"),
-        ("2", "填写 API Key", "上传完成后再填写。"),
-        ("3", "开始生成", "准备好后点击主按钮。"),
-        ("4", "查看最佳文案", "先看最推荐的一版。"),
-    ]
-    cards = []
-    for index, title, copy in steps:
-        step_number = int(index)
-        state_class = ""
-        if step_number < current_step:
-            state_class = " is-done"
-        elif step_number == current_step:
-            state_class = " is-active"
-        cards.append(
-            f"""
-            <div class="attention-step{state_class}">
-              <div class="attention-step-index">{html.escape(index)}</div>
-              <div class="attention-step-title">{html.escape(title)}</div>
-              <div class="attention-step-copy">{html.escape(copy)}</div>
-            </div>
-            """
-        )
-    return f'<div class="attention-shell"><div class="attention-stepper">{"".join(cards)}</div></div>'
-
+# ---------------------------------------------------------------------------
+# Render helpers
+# ---------------------------------------------------------------------------
 
 def _format_tags(tag_text):
-    tags = [item.strip() for item in str(tag_text or "").split() if item.strip()]
+    tags = [t.strip() for t in str(tag_text or "").split() if t.strip()]
     if not tags:
         return ""
-    return "".join(f"<span>{html.escape(tag)}</span>" for tag in tags)
+    return "".join(f"<span>{html.escape(t)}</span>" for t in tags)
+
+
+def render_grid_html(payload):
+    """Render 9-grid visual preview from pipeline result."""
+    grid = (payload or {}).get("grid")
+    if not grid or not grid.get("slots"):
+        return '<div class="attention-flow-note">九宫格预览将在生成后出现。</div>'
+
+    slots = grid["slots"]
+    # Map filename to uploaded image path for display
+    image_map = {}
+    meta = (payload or {}).get("meta", {})
+    source_images = meta.get("source_images", [])
+    upload_dir = payload.get("_upload_dir", "")
+
+    narrative = grid.get("grid_narrative", "")
+    narrative_html = ""
+    if narrative:
+        narrative_html = f'<div class="attention-narrative">{html.escape(narrative)}</div>'
+
+    cells = []
+    for slot in slots:
+        pos = slot.get("position", 0)
+        fname = slot.get("filename", "")
+        role = slot.get("role", "")
+        score = slot.get("composite_score", 0)
+        is_cover = pos == 1
+        cover_cls = " is-cover" if is_cover else ""
+
+        # Try to find actual image file
+        img_html = ""
+        if upload_dir and fname:
+            img_path = Path(upload_dir) / fname
+            if img_path.exists():
+                img_html = f'<img src="file={img_path}" alt="{html.escape(fname)}">'
+
+        badge_text = "封面" if is_cover else str(pos)
+
+        cells.append(f"""
+        <div class="attention-grid-cell{cover_cls}">
+          {img_html}
+          <div class="attention-grid-badge">{badge_text}</div>
+          <div class="attention-grid-score">{score:.1f}</div>
+          <div class="attention-grid-role">{html.escape(role)}</div>
+        </div>
+        """)
+
+    # Pad to 9 if less
+    while len(cells) < 9:
+        cells.append('<div class="attention-grid-cell"><div class="attention-grid-badge">-</div></div>')
+
+    grid_html = '<div class="attention-grid-preview">' + "".join(cells[:9]) + "</div>"
+
+    # Cover alternatives
+    alt_html = ""
+    alts = grid.get("cover_alternatives", [])
+    if alts:
+        alt_names = ", ".join(a.get("filename", "?") for a in alts)
+        alt_html = f'<p style="font-size:13px;color:#666;margin-top:8px;">封面备选：{html.escape(alt_names)}</p>'
+
+    return f"""
+    <div>
+      <h3 style="margin:0 0 8px;">九宫格编排</h3>
+      {narrative_html}
+      {grid_html}
+      {alt_html}
+    </div>
+    """
+
+
+def render_excluded_html(payload):
+    """Render excluded images table."""
+    grid = (payload or {}).get("grid")
+    if not grid:
+        return ""
+    excluded = grid.get("excluded", [])
+    if not excluded:
+        return "<p>全部图片都被选入九宫格。</p>"
+
+    rows = []
+    for ex in excluded:
+        fname = html.escape(ex.get("filename", "?"))
+        score = ex.get("composite_score", 0)
+        reason = html.escape(ex.get("exclude_reason", ""))
+        rows.append(f"<tr><td>{fname}</td><td>{score:.1f}</td><td>{reason}</td></tr>")
+
+    return f"""
+    <table class="attention-excluded-table">
+      <thead><tr><th>文件</th><th>综合分</th><th>淘汰原因</th></tr></thead>
+      <tbody>{"".join(rows)}</tbody>
+    </table>
+    """
 
 
 def render_best_copy_html(payload):
@@ -385,14 +300,17 @@ def render_best_copy_html(payload):
     title_a = str(best_copy.get("title_a", "")).strip()
     title_b = str(best_copy.get("title_b", "")).strip()
     content = str(best_copy.get("content", "")).strip()
+    flip_guide = str(best_copy.get("flip_guide", "")).strip()
     tags_html = _format_tags(best_copy.get("tags", ""))
 
     if not (title_a or title_b or content):
         return """
         <div class="attention-result-card">
-          <div class="attention-result-kicker">步骤 4</div>
-          <h3>最佳文案</h3>
-          <div class="attention-empty">生成完成后，这里会先出现一版最值得直接修改的文案。</div>
+          <div class="attention-result-kicker">整组文案</div>
+          <h3>文案结果</h3>
+          <div style="padding:20px;border-radius:18px;background:#fafafa;border:1px dashed rgba(20,20,20,0.12);color:#616161;line-height:1.7;">
+            生成完成后，这里会出现基于九宫格编排的整组文案。
+          </div>
         </div>
         """
 
@@ -404,14 +322,19 @@ def render_best_copy_html(payload):
     titles_html = "".join(title_items) or "<li>暂无标题建议</li>"
     content_html = html.escape(content).replace("\n", "<br>")
 
+    flip_html = ""
+    if flip_guide:
+        flip_html = f'<div class="attention-result-subhead">翻页引导</div><p>{html.escape(flip_guide)}</p>'
+
     return f"""
     <div class="attention-result-card">
-      <div class="attention-result-kicker">步骤 4</div>
-      <h3>最佳文案</h3>
+      <div class="attention-result-kicker">整组文案</div>
+      <h3>文案结果</h3>
       <div class="attention-result-subhead">标题建议</div>
       <ul class="attention-result-list">{titles_html}</ul>
       <div class="attention-result-subhead">正文草稿</div>
       <p>{content_html}</p>
+      {flip_html}
       <div class="attention-result-subhead">标签建议</div>
       <div class="attention-tags">{tags_html or "<span>暂无标签</span>"}</div>
     </div>
@@ -420,348 +343,190 @@ def render_best_copy_html(payload):
 
 def render_insight_markdown(payload):
     intent = (payload or {}).get("intent") or {}
-    why_it_works = str((payload or {}).get("why_it_works", "")).strip()
+    why = str((payload or {}).get("why_it_works", "")).strip()
+    grid = (payload or {}).get("grid") or {}
+
     if not intent:
-        return "暂无切入点分析。"
+        return "暂无分析。"
 
     lines = [
-        "### 这张图的切入点",
-        f"- 图里最抓人的点：{intent.get('hero_element', '未识别')}",
-        f"- 别人最想问的话：{intent.get('viewer_question', '未识别')}",
+        "### 封面图分析",
+        f"- 视觉主角：{intent.get('hero_element', '未识别')}",
+        f"- 用户最想问：{intent.get('viewer_question', '未识别')}",
     ]
-    if why_it_works:
-        lines.append(f"- 为什么这样写：{why_it_works}")
+    if why:
+        lines.append(f"- 叙事线：{why}")
     mood = str(intent.get("mood", "")).strip()
     if mood:
-        lines.append(f"- 画面感觉：{mood}")
+        lines.append(f"- 画面氛围：{mood}")
+
+    meta = (payload or {}).get("meta", {})
+    analyzed = meta.get("photos_analyzed")
+    source = meta.get("source_images", [])
+    if analyzed is not None:
+        lines.append(f"- 分析了 {analyzed} 张图，来源 {len(source)} 张")
+
     return "\n".join(lines)
 
 
-def render_candidates_markdown(payload):
-    candidates = list((payload or {}).get("copy_candidates") or [])
-    if not candidates:
-        return "暂无候选文案。"
-    if len(candidates) == 1:
-        return "当前只有 1 版结果，你可以直接从上面的最佳文案继续改。"
+# ---------------------------------------------------------------------------
+# Pipeline runner
+# ---------------------------------------------------------------------------
 
-    lines = ["### 其他候选文案"]
-    for index, candidate in enumerate(candidates[1:], start=2):
-        lines.extend(
-            [
-                f"#### 文案 {index}",
-                f"- 标题 A：{candidate.get('title_a', '') or '暂无'}",
-                f"- 标题 B：{candidate.get('title_b', '') or '暂无'}",
-                f"- 标签：{candidate.get('tags', '') or '暂无'}",
-                "",
-                candidate.get("content", "").strip() or "暂无正文",
-                "",
-            ]
-        )
-    return "\n".join(lines).strip()
-
-
-def _current_step(image_path=None, api_key="", has_result=False):
-    if has_result:
-        return 4
-    if image_path and str(api_key or "").strip():
-        return 3
-    if image_path:
-        return 2
-    return 1
-
-
-def _flow_hint(image_path=None, api_key=""):
-    if not image_path:
-        return "先上传一张图片，我们会按步骤带你走完。"
-    if not str(api_key or "").strip():
-        return "图片已准备好，下一步填写你的 API Key。"
-    return "现在可以点击开始生成。"
-
-
-def _empty_result_outputs():
-    return (
-        gr.update(visible=False),
-        "",
-        render_best_copy_html({}),
-        "",
-        "",
-        None,
-    )
-
-
-def update_flow(image_path, api_key):
-    image_ready = bool(image_path)
-    key_ready = bool(str(api_key or "").strip())
-    return (
-        render_stepper(_current_step(image_path=image_path, api_key=api_key)),
-        gr.update(visible=image_ready),
-        _flow_hint(image_path=image_path, api_key=api_key),
-        gr.update(interactive=image_ready and key_ready),
-        *_empty_result_outputs(),
-    )
-
-
-def _result_outputs_from_payload(payload, notice):
-    return (
-        gr.update(visible=True),
-        notice,
-        render_best_copy_html(payload),
-        render_insight_markdown(payload),
-        render_candidates_markdown(payload),
-        payload,
-    )
-
-
-def _load_public_example():
-    with open(EXAMPLE_JSON_PATH, encoding="utf-8") as handle:
-        return json.load(handle)
-
-
-def load_public_example(image_path, api_key):
-    example_result = _load_public_example()
-    return (
-        render_stepper(_current_step(image_path=image_path, api_key=api_key)),
-        *_result_outputs_from_payload(
-            example_result,
-            "已加载公开示例结果。当前展示的是示例，不是你刚上传的图片。",
-        ),
-    )
-
-
-def run_attention(
-    image_path,
-    provider,
-    api_key,
-    extra_context,
-):
-    if not image_path:
+def run_attention(images, extra_context, progress=gr.Progress()):
+    """Run the full pipeline with multiple uploaded images."""
+    if not images:
         return (
-            render_stepper(_current_step(image_path=image_path, api_key=api_key)),
-            gr.update(visible=True),
-            "请先上传一张图片。",
+            None,
+            '<div class="attention-flow-note">请先上传图片。</div>',
             render_best_copy_html({}),
+            "",
             "",
             "",
             None,
         )
 
-    with tempfile.TemporaryDirectory(prefix="attention_upload_") as tmpdir:
-        src_path = Path(image_path)
-        tmp_photo = Path(tmpdir) / src_path.name
-        tmp_photo.write_bytes(src_path.read_bytes())
+    progress(0.1, desc="准备图片...")
 
-        result = run_attention_pipeline(
-            photos_dir=Path(tmpdir),
-            provider=provider,
-            api_key=api_key,
-            include_viral_research=True,
-            extra_context=extra_context,
-        )
+    # Copy uploaded images into a temp directory
+    tmpdir = tempfile.mkdtemp(prefix="attention_grid_")
+    for img_path in images:
+        src = Path(img_path)
+        dst = Path(tmpdir) / src.name
+        # Handle duplicate filenames
+        counter = 1
+        while dst.exists():
+            dst = Path(tmpdir) / f"{src.stem}_{counter}{src.suffix}"
+            counter += 1
+        shutil.copy2(src, dst)
+
+    photo_count = len(list(Path(tmpdir).iterdir()))
+    progress(0.2, desc=f"分析 {photo_count} 张图片...")
+
+    result = run_attention_pipeline(
+        photos_dir=tmpdir,
+        provider="auto",
+        api_key="",
+        include_viral_research=True,
+        extra_context=extra_context,
+    )
+
     if result.status != "ok":
-        if result.error:
-            return (
-                render_stepper(_current_step(image_path=image_path, api_key=api_key)),
-                gr.update(visible=True),
-                f"生成失败：{result.error.message}",
-                render_best_copy_html({}),
-                "",
-                "",
-                result.model_dump(exclude_none=True),
-            )
+        err_msg = result.error.message if result.error else "生成失败，请稍后重试。"
         return (
-            render_stepper(_current_step(image_path=image_path, api_key=api_key)),
-            gr.update(visible=True),
-            "生成失败，请稍后重试。",
+            None,
+            f'<div class="attention-flow-note" style="background:#fff0f0;border-color:rgba(220,38,38,0.2);color:#991b1b;">{html.escape(err_msg)}</div>',
             render_best_copy_html({}),
+            "",
             "",
             "",
             result.model_dump(exclude_none=True),
         )
 
+    progress(0.9, desc="渲染结果...")
     payload = result.model_dump(exclude_none=True)
+    payload["_upload_dir"] = tmpdir  # for grid image preview
+
+    # Render actual grid PNG
+    grid_image = None
+    grid_slots = payload.get("grid", {}).get("slots", [])
+    if grid_slots:
+        try:
+            grid_image = render_grid_png(slots=grid_slots, photos_dir=tmpdir)
+        except Exception as e:
+            logger.warning("Grid PNG render failed: %s", e)
+
+    selected_count = len(grid_slots)
     return (
-        render_stepper(_current_step(image_path=image_path, api_key=api_key, has_result=True)),
-        *_result_outputs_from_payload(
-            payload,
-            "已完成生成。先看上面的最佳文案，如果方向对，再展开下面的说明继续修改。",
-        ),
+        grid_image,
+        render_grid_html(payload),
+        render_best_copy_html(payload),
+        render_insight_markdown(payload),
+        render_excluded_html(payload),
+        f"已完成：从 {photo_count} 张图中选出 {selected_count} 张，编排九宫格并生成文案。",
+        payload,
     )
 
 
+# ---------------------------------------------------------------------------
+# Gradio App
+# ---------------------------------------------------------------------------
+
 def build_demo():
-    example_result = _load_public_example()
-    example_story = """
-### 公开示例拆解
-1. 原图：局部细节穿搭照，第一眼会先停在无名指上的蜘蛛装饰。
-2. 视觉主角：蜘蛛装饰美甲
-3. 用户最想问：这个蜘蛛装饰美甲是怎么做出来的？
-4. 为什么这个角度成立：它不是泛泛写整套穿搭，而是先用一个反差细节把人停住。
-5. 生成文案：把“先被细节吸走，再顺着气氛看完整张图”的过程写出来，形成更自然的图文展开。
-"""
-
-    faq_markdown = """
-### FAQ
-**它和普通 AI 文案工具有什么区别？**  
-普通工具往往上来就开始写，`attention / 注意力` 会先帮你看图，再出文案。
-
-**会不会乱编品牌、价格或教程细节？**  
-不会。你没提供的信息，它不会硬写。
-
-**适合什么内容？**  
-适合穿搭、美甲、饰品、探店、局部细节、日常发图这类内容。
-"""
-
-    with gr.Blocks(title="attention / 注意力", theme=gr.themes.Default(), css=DEMO_CSS) as demo:
+    with gr.Blocks(
+        title="attention / 注意力 — 九宫格选图引擎",
+    ) as demo:
         gr.HTML(HERO_HTML)
-        stepper = gr.HTML(render_stepper(1))
-        with gr.Row(elem_classes="attention-workbench"):
-            with gr.Column(scale=7, elem_classes="attention-panel"):
-                gr.Markdown("## 步骤 1：上传你的图片")
-                gr.Markdown(
-                    "先上传一张你想写的图片。上传后，我们再带你填写 key 并生成结果。",
-                    elem_classes="attention-subtitle",
-                )
-                image_input = gr.Image(type="filepath", label="图片")
-            with gr.Column(scale=5, visible=False, elem_classes="attention-panel") as setup_panel:
-                gr.Markdown("## 步骤 2：填写你的 API Key")
-                flow_hint = gr.Markdown(
-                    _flow_hint(),
-                    elem_classes="attention-flow-note",
-                )
-                provider = gr.Dropdown(
-                    choices=["gemini", "minimax", "auto"],
-                    value="gemini",
-                    label="模型",
-                )
-                api_key = gr.Textbox(
-                    value="",
-                    label="你的 API Key",
-                    type="password",
-                    placeholder="只在这次使用，不会保存",
+
+        with gr.Row():
+            # Left: Upload + Config
+            with gr.Column(scale=6, elem_classes="attention-panel"):
+                gr.Markdown("### 上传图片")
+                gr.Markdown("拖入 15-50 张图片（一次拍摄/旅行/选品），支持 jpg/png/webp。", elem_classes="attention-subtitle")
+                image_input = gr.File(
+                    file_count="multiple",
+                    file_types=["image"],
+                    label="选择图片",
+                    type="filepath",
                 )
                 with gr.Accordion("补充说明（可选）", open=False):
                     extra_context = gr.Textbox(
                         value="",
                         label="补充说明",
-                        lines=4,
-                        placeholder="例如：这是手工饰品，预算 99，拍摄地点在上海。",
+                        lines=3,
+                        placeholder="例如：这是上海某咖啡店探店，人均 45 元。",
                     )
-                gr.Markdown("## 步骤 3：开始生成", elem_classes="attention-step-block")
-                run_btn = gr.Button("开始生成", variant="primary", interactive=False)
+                run_btn = gr.Button("开始选图 + 生成文案", variant="primary", size="lg")
 
-        with gr.Column(visible=False, elem_classes="attention-result-shell") as result_section:
-            gr.Markdown("## 步骤 4：查看最佳文案")
-            result_notice = gr.Markdown("", elem_classes="attention-flow-note")
-            best_copy_output = gr.HTML(render_best_copy_html({}))
-            with gr.Accordion("这张图的切入点", open=False):
-                insight_output = gr.Markdown("")
-            with gr.Accordion("候选文案", open=False):
-                candidates_output = gr.Markdown("")
-            with gr.Accordion("开发者查看：详细数据", open=False):
-                json_output = gr.JSON(label="调试数据 JSON", value=None)
+            # Right: Grid preview
+            with gr.Column(scale=6, elem_classes="attention-panel"):
+                grid_image_output = gr.Image(
+                    label="九宫格预览（可直接下载）",
+                    type="pil",
+                    show_download_button=True,
+                    interactive=False,
+                )
+                grid_output = gr.HTML(
+                    '<div class="attention-flow-note">九宫格预览将在生成后出现。</div>'
+                )
 
-        gr.HTML(TRUST_HTML)
+        # Results section
+        status_bar = gr.Markdown("", visible=True)
 
-        gr.HTML(EXAMPLE_PANEL_HTML)
-        example_btn = gr.Button("查看公开示例")
+        best_copy_output = gr.HTML(render_best_copy_html({}))
 
-        with gr.Accordion("查看示例结果拆解", open=False):
-            gr.Markdown(example_story)
+        with gr.Row():
+            with gr.Column():
+                with gr.Accordion("封面图分析", open=False):
+                    insight_output = gr.Markdown("")
+                with gr.Accordion("被淘汰的图片", open=False):
+                    excluded_output = gr.HTML("")
+                with gr.Accordion("开发者：详细数据", open=False):
+                    json_output = gr.JSON(label="调试 JSON", value=None)
 
-        with gr.Accordion("FAQ", open=False):
-            gr.Markdown(faq_markdown)
-
-        image_input.change(
-            fn=update_flow,
-            inputs=[image_input, api_key],
-            outputs=[
-                stepper,
-                setup_panel,
-                flow_hint,
-                run_btn,
-                result_section,
-                result_notice,
-                best_copy_output,
-                insight_output,
-                candidates_output,
-                json_output,
-            ],
-        )
-        api_key.change(
-            fn=update_flow,
-            inputs=[image_input, api_key],
-            outputs=[
-                stepper,
-                setup_panel,
-                flow_hint,
-                run_btn,
-                result_section,
-                result_notice,
-                best_copy_output,
-                insight_output,
-                candidates_output,
-                json_output,
-            ],
-        )
         run_btn.click(
             fn=run_attention,
-            inputs=[
-                image_input,
-                provider,
-                api_key,
-                extra_context,
-            ],
+            inputs=[image_input, extra_context],
             outputs=[
-                stepper,
-                result_section,
-                result_notice,
+                grid_image_output,
+                grid_output,
                 best_copy_output,
                 insight_output,
-                candidates_output,
+                excluded_output,
+                status_bar,
                 json_output,
             ],
         )
-        example_btn.click(
-            fn=load_public_example,
-            inputs=[image_input, api_key],
-            outputs=[
-                stepper,
-                result_section,
-                result_notice,
-                best_copy_output,
-                insight_output,
-                candidates_output,
-                json_output,
-            ],
-        )
+
     return demo
 
 
 def build_parser():
-    parser = argparse.ArgumentParser(
-        description="Launch the attention / 注意力 Web demo for desktop or mobile browsers."
-    )
-    parser.add_argument(
-        "--host",
-        default="127.0.0.1",
-        help="监听地址。局域网手机访问时可使用 0.0.0.0。",
-    )
-    parser.add_argument(
-        "--port",
-        type=int,
-        default=7860,
-        help="Gradio 端口，默认 7860。",
-    )
-    parser.add_argument(
-        "--share",
-        action="store_true",
-        help="启用 Gradio 临时分享链接。",
-    )
-    parser.add_argument(
-        "--inbrowser",
-        action="store_true",
-        help="启动后自动在默认浏览器中打开。",
-    )
+    parser = argparse.ArgumentParser(description="attention 九宫格选图引擎 Web UI")
+    parser.add_argument("--host", default="127.0.0.1")
+    parser.add_argument("--port", type=int, default=7860)
+    parser.add_argument("--share", action="store_true")
+    parser.add_argument("--inbrowser", action="store_true")
     return parser
 
 
@@ -773,6 +538,8 @@ def main():
         share=args.share,
         inbrowser=args.inbrowser,
         show_error=True,
+        theme=gr.themes.Default(),
+        css=DEMO_CSS,
     )
 
 

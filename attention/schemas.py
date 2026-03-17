@@ -60,6 +60,27 @@ class IntentPayload(BaseModel):
     relevance_score: float | int | None = None
 
 
+class GridSlot(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    position: int
+    filename: str = ""
+    role: str = ""
+    composite_score: float = 0.0
+    cover_potential: float = 0.0
+    reason: str = ""
+
+
+class GridResult(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    cover: GridSlot | None = None
+    cover_alternatives: list[GridSlot] = Field(default_factory=list)
+    slots: list[GridSlot] = Field(default_factory=list)
+    excluded: list[dict] = Field(default_factory=list)
+    grid_narrative: str = ""
+
+
 class CopyCandidate(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -67,6 +88,7 @@ class CopyCandidate(BaseModel):
     title_b: str = ""
     content: str = ""
     tags: str = ""
+    flip_guide: str = ""
 
 
 class AnalyzeImageIntentRequest(BaseModel):
@@ -131,6 +153,7 @@ class GenerateAttentionCopyResponse(BaseModel):
     schema_version: str = SCHEMA_VERSION
     status: Literal["ok", "error"]
     intent: IntentPayload | None = None
+    grid: GridResult | None = None
     copy_candidates: list[CopyCandidate] = Field(default_factory=list)
     best_copy: CopyCandidate | None = None
     why_it_works: str = ""

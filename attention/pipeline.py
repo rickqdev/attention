@@ -14,7 +14,7 @@ from uuid import uuid4
 
 from pydantic import BaseModel, Field
 
-from .schemas import CopyCandidate, IntentPayload
+from .schemas import CopyCandidate, GridResult, IntentPayload
 from .steps.base import Step
 
 logger = logging.getLogger("attention.pipeline")
@@ -42,6 +42,9 @@ class PipelineState(BaseModel):
     # Stage 2: Analyze
     intent: IntentPayload | None = None
     analyzed_images: list[dict[str, Any]] = Field(default_factory=list)
+
+    # Stage 2.5: Arrange (grid)
+    grid: GridResult | None = None
 
     # Stage 3: Research (optional)
     research: ResearchPayload | None = None

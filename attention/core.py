@@ -33,7 +33,7 @@ from .schemas import (
     IntentPayload,
     ResponseMeta,
 )
-from .steps import AnalyzeStep, GenerateStep, IngestStep, ResearchStep, SelectStep
+from .steps import AnalyzeStep, ArrangeStep, GenerateStep, IngestStep, ResearchStep
 
 
 def _build_chain(provider: str = "auto", api_key: str = "") -> ProviderChain:
@@ -88,7 +88,7 @@ def _build_pipeline(chain: ProviderChain) -> Pipeline:
     return Pipeline([
         IngestStep(),
         AnalyzeStep(chain),
-        SelectStep(),
+        ArrangeStep(),
         ResearchStep(chain),
         GenerateStep(chain),
     ])
@@ -160,16 +160,42 @@ def render_markdown(result) -> str:
         f"- 用户最想问：{result.intent.viewer_question if result.intent else '未识别'}",
         f"- 为什么有效：{result.why_it_works or '未生成'}",
         "",
-        "## 最佳文案",
     ]
+
+    # Grid arrangement section
+    grid = getattr(result, "_grid", None)
+    # Try to get grid from meta or direct attribute
+    if grid is None and hasattr(result, "meta") and hasattr(result.meta, "grid"):
+        grid = result.meta.grid
+
+    if grid and grid.slots:
+        lines.extend(["## 九宫格编排", ""])
+        if grid.grid_narrative:
+            lines.append(f"**叙事线**：{grid.grid_narrative}")
+            lines.append("")
+        lines.append("| 位置 | 文件 | 角色 | 综合分 |")
+        lines.append("|------|------|------|--------|")
+        for slot in grid.slots:
+            lines.append(f"| {slot.position} | {slot.filename} | {slot.role} | {slot.composite_score:.1f} |")
+        if grid.cover_alternatives:
+            lines.append("")
+            alt_names = ", ".join(a.filename for a in grid.cover_alternatives)
+            lines.append(f"**封面备选**：{alt_names}")
+        if grid.excluded:
+            lines.append("")
+            lines.append(f"**淘汰**：{len(grid.excluded)} 张")
+        lines.append("")
+
+    lines.append("## 最佳文案")
     if best_copy:
         lines.extend([
             f"- 标题 A：{best_copy.title_a}",
             f"- 标题 B：{best_copy.title_b}",
             f"- 标签：{best_copy.tags}",
-            "",
-            best_copy.content.strip(),
         ])
+        if best_copy.flip_guide:
+            lines.append(f"- 翻页引导：{best_copy.flip_guide}")
+        lines.extend(["", best_copy.content.strip()])
     else:
         lines.append("- 未生成到可用文案")
 
@@ -184,10 +210,10 @@ def render_markdown(result) -> str:
             f"- 标题 A：{note.title_a}",
             f"- 标题 B：{note.title_b}",
             f"- 标签：{note.tags}",
-            "",
-            note.content.strip(),
-            "",
         ])
+        if note.flip_guide:
+            lines.append(f"- 翻页引导：{note.flip_guide}")
+        lines.extend(["", note.content.strip(), ""])
     return "\n".join(lines).strip() + "\n"
 
 
@@ -378,6 +404,7 @@ def run_attention_pipeline(
     response = GenerateAttentionCopyResponse(
         status="ok",
         intent=state.intent,
+        grid=state.grid,
         copy_candidates=state.copy_candidates,
         best_copy=state.best_copy,
         why_it_works=state.why_it_works,
